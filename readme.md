@@ -19,27 +19,19 @@ or
 
     get unique filename
 
-        $file = $entry->upload('image'); // => wfj412.jpg
+        $file = $entry->save(\Input::file('image')); // => wfj412.jpg
     
-    or input_name is an array
+    or input files is an array
     
-        $files = $entry->upload('images'); // => ['asqwefv.png', '1erfv.png']
+        $files = [];
+        foreach (\Input::file('images') as $file) {
+            $files += $entry->save('images');
+        }
     
 * Costimize your upload file name
 
-        $file = $entry->upload('image', 'costimized_filename'); // => costimized_filename.jpg
-        
-    of course you can giving an array of file names for file entry
-        
-        $files = $entry->upload(
-            'images', 
-            [
-                'costimized_filename1',
-                'costimized_filename2'
-            ]
-        );
-        // => ['costimized_filename1.jpg', 'costimized_filename2.jpg']
-        
+        $file = $entry->save('image', 'costimized_filename'); // => costimized_filename.jpg
+          
 
 ### Get file fullpath
 
@@ -50,7 +42,7 @@ or
 All uploaded files cannot found in public folder, because FileEntry use Laravel Storage to store them.  
 You can write a routing rules to get it. it will response file content and use http cache by default.
 
-    Route::get('/upload/{filename}', function($filename) {
+    Route::get('/upload/{filename}', function ($filename) {
         $entry = new FileEntry();
         return $entry->response($filename);
     });
