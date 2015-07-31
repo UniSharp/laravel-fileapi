@@ -1,15 +1,15 @@
 {
   "name": "unisharp/laravel-fileentry",
-  "description": "A file upload/editor intended for use with Laravel 5 and CKEditor",
+  "description": "Handle Files with Laravel Storage",
   "license": "MIT",
   "authors": [
     {
-      "name": "Unisharp",
+      "name": "Unisharp"
     }
   ],
   "require": {
     "php": ">=5.5.0",
-    "illuminate/support": ">=5.0.0",
+    "illuminate/support": ">=5.0.0"
   },
   "autoload": {
     "psr-4": {
