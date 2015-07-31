@@ -6,6 +6,8 @@ FileEntry API is good way to handle files with Laravel Storage.
 
 ### Initialize FileEntry
 
+    use \Unisharp\FileEntry\FileEntry;
+    
     $entry = new FileEntry();
     
 or
