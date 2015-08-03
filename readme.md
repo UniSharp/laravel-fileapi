@@ -31,7 +31,7 @@ or
     $entry = new FileEntry('/images'); # initialize it by giving a base path
     
 
-### Get Upload Files By Giving input name
+### Save to Storage By Giving Lravel Upload File
 
 * Normal Usage
 
