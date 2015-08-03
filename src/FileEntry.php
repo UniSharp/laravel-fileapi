@@ -72,7 +72,11 @@ class FileEntry
                     ->setPublic();
             }
 
-            return response(null, 304)->setPublic();
+            return response(null, 304)
+                ->setEtag($etag)
+                ->setLastModified(new \DateTime($time))
+                ->setExpires(new \DateTime($expires))
+                ->setPublic();
         } catch (FileNotFoundException $e) {
             abort(404);
         } catch (\Illuminate\Contracts\Filesystem\FileNotFoundException $e) {
