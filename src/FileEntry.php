@@ -53,7 +53,7 @@ class FileEntry
         return $this->basepath . $filename;
     }
 
-    public function response($filename)
+    public function response($filename, $headers = [])
     {
         try {
             $path = $this->basepath . $filename;
@@ -65,14 +65,14 @@ class FileEntry
             if (trim(\Request::header('If-None-Match'), '\'\"') != $etag ||
                 new \DateTime(\Request::header('If-Modified-Since')) != new \DateTime($time)
             ) {
-                return response($file, 200)->header('Content-Type', \Storage::mimeType($path))
+                return response($file, 200, $headers)->header('Content-Type', \Storage::mimeType($path))
                     ->setEtag($etag)
                     ->setLastModified(new \DateTime($time))
                     ->setExpires(new \DateTime($expires))
                     ->setPublic();
             }
 
-            return response(null, 304)
+            return response(null, 304, $headers)
                 ->setEtag($etag)
                 ->setLastModified(new \DateTime($time))
                 ->setExpires(new \DateTime($expires))

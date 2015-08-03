@@ -65,6 +65,10 @@ You can write a routing rules to get it. it will response file content and use h
         return $entry->response($filename);
     });
     
+and it can add headers array by optional
+
+    return $entry->response($filename, ['Content-Disposition', 'attachement']);
+    
 ### Work with Laravel Storage
 
 * Get file content
