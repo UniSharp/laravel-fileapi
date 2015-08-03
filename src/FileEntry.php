@@ -40,6 +40,19 @@ class FileEntry
         return $filename;
     }
 
+    public function fullpath($filename)
+    {
+        if (mb_substr($this->basepath, -1, 1, 'utf8') != '/') {
+            $this->basepath .= '/';
+        }
+
+        if (preg_match('/^\//', $filename)) {
+            return $this->basepath . mb_substr($filename, 1, null, 'utf8');
+        }
+
+        return $this->basepath . $filename;
+    }
+
     public function response($filename)
     {
         try {
@@ -61,6 +74,8 @@ class FileEntry
 
             return response(null, 304)->setPublic();
         } catch (FileNotFoundException $e) {
+            abort(404);
+        } catch (\Illuminate\Contracts\Filesystem\FileNotFoundException $e) {
             abort(404);
         }
     }
