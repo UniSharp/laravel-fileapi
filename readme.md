@@ -4,6 +4,22 @@
 
 FileEntry API is good way to handle files with Laravel Storage.
 
+### Install FileEntry
+
+composer.json:
+
+    "require" : {
+        "unisharp/laravel-fileentry" : "dev-master"
+    }, 
+    "repositories": {
+        "type": "git",
+        "url": "https://github.com/UniSharp/laravel-fileentry.git
+    }
+
+save it and then 
+
+    composer update    
+
 ### Initialize FileEntry
 
     use \Unisharp\FileEntry\FileEntry;
@@ -30,9 +46,9 @@ or
             $files += $entry->save('images');
         }
     
-* Costimize your upload file name
+* Custimize your upload file name
 
-        $file = $entry->save('image', 'costimized_filename'); // => costimized_filename.jpg
+        $file = $entry->save('image', 'custimized_filename'); // => custimized_filename.jpg
           
 
 ### Get file fullpath
