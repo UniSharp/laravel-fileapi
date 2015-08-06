@@ -15,6 +15,10 @@ class FileEntry
             $basepath .= '/';
         }
 
+        if (mb_substr($basepath, 0, 1, 'utf8') == '/') {
+            $basepath = mb_substr($basepath, 1, null, 'utf8');
+        }
+
         $this->basepath = $basepath;
     }
 
@@ -51,6 +55,18 @@ class FileEntry
         }
 
         return $this->basepath . $filename;
+    }
+
+    public function url($filename)
+    {
+        if (\Config::get('filesystems.default') == 's3') {
+            return \Storage::getDriver()->getAdapter()->getClient()->getObjectUrl(
+                \Storage::getDriver()->getAdapter()->getBucket(),
+                $this->basepath . $filename
+            );
+        } else {
+            return $this->basepath . $filename;
+        }
     }
 
     public function response($filename, $headers = [])

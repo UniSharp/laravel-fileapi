@@ -69,6 +69,12 @@ and it can add headers array by optional
 
     return $entry->response($filename, ['Content-Disposition', 'attachement']);
     
+### Parse File Path to URL
+if you store your file into cloud storage and you want to get url cloud site,
+you can use url() method to get it
+
+    $entry->url('wfjsdf.jpg'); // => "https://s3-ap-northeast-1.amazonaws.com/xxx/xxx/55c1e027caa62L.png"
+    
 ### Work with Laravel Storage
 
 * Get file content
