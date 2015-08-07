@@ -1,11 +1,11 @@
 <?php
 
-namespace Unisharp\FileEntry;
+namespace Unisharp\FileApi;
 
 use League\Flysystem\FileNotFoundException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
-class FileEntry
+class FileApi
 {
     protected $basepath;
 
@@ -44,7 +44,7 @@ class FileEntry
         return $filename;
     }
 
-    public function fullpath($filename)
+    public function getPath($filename)
     {
         if (mb_substr($this->basepath, -1, 1, 'utf8') != '/') {
             $this->basepath .= '/';
@@ -57,7 +57,7 @@ class FileEntry
         return $this->basepath . $filename;
     }
 
-    public function url($filename)
+    public function getUrl($filename)
     {
         if (\Config::get('filesystems.default') == 's3') {
             return \Storage::getDriver()->getAdapter()->getClient()->getObjectUrl(
@@ -69,7 +69,7 @@ class FileEntry
         }
     }
 
-    public function response($filename, $headers = [])
+    public function getResponse($filename, $headers = [])
     {
         try {
             $path = $this->basepath . $filename;
