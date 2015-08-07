@@ -43,7 +43,7 @@ or
     
         $files = [];
         foreach (\Input::file('images') as $file) {
-            $files += $entry->save('images');
+            $files []= $entry->save('images');
         }
     
 * Custimize your upload file name
