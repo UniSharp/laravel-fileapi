@@ -1,5 +1,5 @@
 {
-  "name": "unisharp/laravel-fileentry",
+  "name": "unisharp/laravel-fileapi",
   "description": "Handle Files with Laravel Storage",
   "license": "MIT",
   "authors": [
