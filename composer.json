@@ -13,7 +13,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Unisharp\\FileEntry\\": "src/"
+      "Unisharp\\FileApi\\": "src/"
     }
   }
 }
