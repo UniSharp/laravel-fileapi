@@ -51,9 +51,9 @@ or
         $file = $fa->save('image', 'custimized_filename'); // => custimized_filename.jpg
           
 
-### Get file fullpath
+### Get file fullpath (abstract path from Laravel Storage)
 
-    $fa->getFullPath('wfj412.jpg'); // => '/images/wfj412.jpg'
+    $fa->getPath('wfj412.jpg'); // => '/images/wfj412.jpg'
     
 ### Routing your files
 
@@ -79,7 +79,7 @@ you can use url() method to get it
 
 * Get file content
 
-        \Storage::get($fa->getPath('wfj412.jpg'));
+        \Storage::get($fa->('wfj412.jpg'));
         
 * Write files
 
