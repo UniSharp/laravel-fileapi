@@ -1,34 +1,34 @@
-## FileEntry API
+## Laravel File API
 
 ### Introduction
 
-FileEntry API is good way to handle files with Laravel Storage.
+Laravel File API is good way to handle files with Laravel Storage.
 
-### Install FileEntry
+### Install File API
 
 composer.json:
 
     "require" : {
-        "unisharp/laravel-fileentry" : "dev-master"
+        "unisharp/laravel-fileapi" : "dev-master"
     }, 
     "repositories": {
         "type": "git",
-        "url": "https://github.com/UniSharp/laravel-fileentry.git
+        "url": "https://github.com/UniSharp/laravel-fileapi.git
     }
 
 save it and then 
 
     composer update    
 
-### Initialize FileEntry
+### Initialize File API
 
-    use \Unisharp\FileEntry\FileEntry;
+    use \Unisharp\FileApi\FileApi;
     
-    $entry = new FileEntry();
+    $fa = new FileApi();
     
 or
     
-    $entry = new FileEntry('/images'); # initialize it by giving a base path
+    $fa = new FileApi('/images'); # initialize it by giving a base path
     
 
 ### Save to Storage By Giving Lravel Upload File
@@ -37,55 +37,55 @@ or
 
     get unique filename
 
-        $file = $entry->save(\Input::file('image')); // => wfj412.jpg
+        $file = $fa->save(\Input::file('image')); // => wfj412.jpg
     
     or input files is an array
     
         $files = [];
         foreach (\Input::file('images') as $file) {
-            $files []= $entry->save('images');
+            $files []= $fa->save('images');
         }
     
 * Custimize your upload file name
 
-        $file = $entry->save('image', 'custimized_filename'); // => custimized_filename.jpg
+        $file = $fa->save('image', 'custimized_filename'); // => custimized_filename.jpg
           
 
 ### Get file fullpath
 
-    $entry->fullpath('wfj412.jpg'); // => '/images/wfj412.jpg'
+    $fa->getFullPath('wfj412.jpg'); // => '/images/wfj412.jpg'
     
 ### Routing your files
 
-All uploaded files cannot found in public folder, because FileEntry use Laravel Storage to store them.  
+All uploaded files cannot found in public folder, because FileApi use Laravel Storage to store them.  
 You can write a routing rules to get it. it will response file content and use http cache by default.
 
     Route::get('/upload/{filename}', function ($filename) {
-        $entry = new FileEntry();
-        return $entry->response($filename);
+        $fa = new FileApi();
+        return $fa->getResponse($filename);
     });
     
 and it can add headers array by optional
 
-    return $entry->response($filename, ['Content-Disposition', 'attachement']);
+    return $fa->getResponse($filename, ['Content-Disposition', 'attachement']);
     
 ### Parse File Path to URL
 if you store your file into cloud storage and you want to get url cloud site,
 you can use url() method to get it
 
-    $entry->url('wfjsdf.jpg'); // => "https://s3-ap-northeast-1.amazonaws.com/xxx/xxx/55c1e027caa62L.png"
+    echo $fa->getUrl('wfjsdf.jpg'); // => "https://s3-ap-northeast-1.amazonaws.com/xxx/xxx/55c1e027caa62L.png"
     
 ### Work with Laravel Storage
 
 * Get file content
 
-        \Storage::get($entry->fullpath('wfj412.jpg'));
+        \Storage::get($fa->getPath('wfj412.jpg'));
         
 * Write files
 
-        \Storage::put($entry->fullpath('wfj412.jpg'));
+        \Storage::put($fa->getPath('wfj412.jpg'));
         
 * Get Mime Type
 
-        \Storage::mimeType($entry->fullpath('wfj412.jpg'));
+        \Storage::mimeType($fa->getPath('wfj412.jpg'));
     
