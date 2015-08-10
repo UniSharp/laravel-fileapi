@@ -4,7 +4,8 @@
   "license": "MIT",
   "authors": [
     {
-      "name": "Unisharp"
+      "name":  "UniSharp Ltd. (Composer Package Maintainer)",
+      "homepage": "http://www.unisharp.com"
     }
   ],
   "require": {
