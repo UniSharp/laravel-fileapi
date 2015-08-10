@@ -1,6 +1,8 @@
 {
   "name": "unisharp/laravel-fileapi",
   "description": "Handle Files with Laravel Storage",
+  "type": "library",
+  "keywords": [ "fileapi", "file", "api", "storage", "laravel"],
   "license": "MIT",
   "authors": [
     {
