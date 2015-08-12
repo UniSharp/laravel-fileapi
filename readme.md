@@ -79,7 +79,7 @@ you can use url() method to get it
 
 * Get file content
 
-        \Storage::get($fa->('wfj412.jpg'));
+        \Storage::get($fa->getPath('wfj412.jpg'));
         
 * Write files
 
