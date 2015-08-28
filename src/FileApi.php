@@ -35,6 +35,29 @@ class FileApi
         if (!empty($cus_name)) {
             $filename = $cus_name . '.' .$suffix;
         }
+
+        switch (\File::mimeType($upload_file)) {
+            case 'image/jpeg':
+            case 'image/jpg':
+                $img = imagecreatefromjpeg($upload_file->getRealPath());
+                $exif = read_exif_data($upload_file->getRealPath());
+                if (isset($exif['Orientation'])) {
+                    switch ($exif['Orientation']) {
+                        case 8:
+                            $img = imagerotate($img, 90, 0);
+                            break;
+                        case 3:
+                            $img = imagerotate($img, 180, 0);
+                            break;
+                        case 6:
+                            $img = imagerotate($img, -90, 0);
+                            break;
+                    }
+                }
+
+                imagejpeg($img, $upload_file->getRealPath());
+        }
+
         \Storage::put(
             $this->basepath . $filename,
             file_get_contents($upload_file->getRealPath())
