@@ -1,6 +1,6 @@
 {
   "name": "unisharp/laravel-fileapi",
-  "description": "Handle Files with Laravel Storage",
+  "description": "Laravel File API - Handle Files with Laravel Storage",
   "type": "library",
   "keywords": [ "fileapi", "file", "api", "storage", "laravel"],
   "license": "MIT",
@@ -14,7 +14,8 @@
     "php": ">=5.5.0",
     "illuminate/support": ">=5.0.0",
     "league/flysystem": ">=1.0",
-    "symfony/http-foundation": ">=2.0"
+    "symfony/http-foundation": ">=2.0",
+    "ext-gd": "*"
   },
   "autoload": {
     "psr-4": {
