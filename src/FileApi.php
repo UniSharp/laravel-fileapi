@@ -8,7 +8,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 class FileApi
 {
     protected $basepath;
-    protected $thumb_sizes = [];
+    protected $thumb_sizes = ['S' => '96x96', 'M' => '256x256', 'L' => '480x480'];
 
     public function __construct($basepath = '/')
     {
@@ -23,9 +23,26 @@ class FileApi
         $this->basepath = $basepath;
     }
 
-    public function thumbs($thumb_sizes)
+    public function get($filename, $size = null)
     {
-        $this->thumb_sizes = $thumb_sizes;
+        // Cut original file name
+        $file = explode('.', $filename);
+
+        if (empty($size) && \Storage::exists($this->basepath . $file[0] . '_L.' . $file[1])) {
+            return $this->basepath . $file[0] . '_L.' . $file[1];
+        } else if (\Storage::exists($this->basepath . $file[0] . '_' . $size . '.' . $file[1])) {
+            return $this->basepath . $file[0] . '_' . $size . '.' . $file[1];
+        } else {
+            return $this->basepath . $filename;
+        }
+    }
+
+    public function thumbs($thumb_sizes = array())
+    {
+        if (!empty($thumb_sizes)) {
+            $this->thumb_sizes = $thumb_sizes;
+        }
+
         return $this;
     }
 
@@ -35,107 +52,6 @@ class FileApi
         return $file;
     }
 
-    private function moveFile($upload_file, $cus_name)
-    {
-        $suffix = $upload_file->getClientOriginalExtension();
-
-        if (empty($cus_name)) {
-            $original_name = uniqid();
-        } else {
-            $original_name = $cus_name;
-        }
-        $filename = $original_name . '.' .$suffix;
-
-        $img = $this->setTmpImage($upload_file);
-
-        \Storage::put(
-            $this->basepath . $filename,
-            file_get_contents($upload_file->getRealPath())
-        );
-
-        \File::delete($upload_file->getRealPath());
-
-        if (!is_null($img) && !empty($this->thumb_sizes)) {
-            $this->saveThumb($img, $original_name, $suffix);
-        }
-
-        return $filename;
-    }
-
-    public function saveThumb($img, $original_name, $suffix)
-    {
-        foreach ($this->thumb_sizes as $size) {
-            $width = imagesx($img);
-            $height = imagesy($img);
-
-            $arr_size = explode('x', $size);
-            $thumb_width = (int)$arr_size[0];
-            $thumb_height = (int)$arr_size[1];
-
-            $thumb_name = $this->basepath . $original_name . '_' . $size . '.' . $suffix;
-            $main_image = $original_name . '.' . $suffix;
-            $tmp_filename = 'tmp/' . $main_image;
-
-            // create a new temporary thumbnail image
-            $tmp_thumb = imagecreatetruecolor($thumb_width, $thumb_height);
-
-            // copy and resize original image into thumbnail image
-            imagecopyresized($tmp_thumb, $img, 0, 0, 0, 0, $thumb_width, $thumb_height, $width, $height);
-
-            // save tmp image
-            \Storage::disk('local')->put($tmp_filename, \Storage::get($this->basepath . $main_image));
-            $tmp_path = \Storage::disk('local')->getDriver()->getAdapter()->getPathPrefix();
-
-            // save thumbnail image
-            imagepng($tmp_thumb, $tmp_path . $tmp_filename);
-            $tmp_file = \Storage::disk('local')->get($tmp_filename);
-            \Storage::put($thumb_name, $tmp_file);
-
-            // remove tmp image
-            \Storage::disk('local')->delete($tmp_filename);
-        }
-    }
-
-    public function setTmpImage($upload_file)
-    {
-        $image_types = array('image/png', 'image/gif', 'image/jpeg', 'image/jpg');
-
-        if (in_array(\File::mimeType($upload_file), $image_types)) {
-            switch (\File::mimeType($upload_file)) {
-                case 'image/png':
-                    $img = imagecreatefrompng($upload_file->getRealPath());
-                    break;
-                case 'image/gif':
-                    $img = imagecreatefromgif($upload_file->getRealPath());
-                    break;
-                case 'image/jpeg':
-                case 'image/jpg':
-                default:
-                    $img = imagecreatefromjpeg($upload_file->getRealPath());
-                    $exif = read_exif_data($upload_file->getRealPath());
-                    if (isset($exif['Orientation'])) {
-                        switch ($exif['Orientation']) {
-                            case 8:
-                                $img = imagerotate($img, 90, 0);
-                                break;
-                            case 3:
-                                $img = imagerotate($img, 180, 0);
-                                break;
-                            case 6:
-                                $img = imagerotate($img, -90, 0);
-                                break;
-                        }
-                    }
-            }
-
-            imagepng($img, $upload_file->getRealPath());
-
-            return $img;
-        } else {
-            return null;
-        }
-    }
-
     public function getPath($filename)
     {
         if (mb_substr($this->basepath, -1, 1, 'utf8') != '/') {
@@ -143,7 +59,7 @@ class FileApi
         }
 
         if (preg_match('/^\//', $filename)) {
-            return $this->basepath . mb_substr($filename, 1, null, 'utf8');
+            $filename = mb_substr($filename, 1, null, 'utf8');
         }
 
         return $this->basepath . $filename;
@@ -209,5 +125,160 @@ class FileApi
         foreach ($files as $file) {
             \Storage::delete($file);
         }
+    }
+
+    /********************************************
+     ***********  Private Functions *************
+     ********************************************/
+
+    private function moveFile($upload_file, $cus_name)
+    {
+        $suffix = $upload_file->getClientOriginalExtension();
+
+        if (empty($cus_name)) {
+            $original_name = uniqid();
+        } else {
+            $original_name = $cus_name;
+        }
+        $filename = $original_name . '.' .$suffix;
+
+        $img = $this->setTmpImage($upload_file);
+
+        \Storage::put(
+            $this->basepath . $filename,
+            file_get_contents($upload_file->getRealPath())
+        );
+
+        \File::delete($upload_file->getRealPath());
+
+        if (!is_null($img) && !empty($this->thumb_sizes)) {
+            $this->saveThumb($img, $original_name, $suffix);
+        }
+
+        return $filename;
+    }
+
+    private function setTmpImage($upload_file)
+    {
+        $image_types = array('image/png', 'image/gif', 'image/jpeg', 'image/jpg');
+
+        if (in_array(\File::mimeType($upload_file), $image_types)) {
+            switch (\File::mimeType($upload_file)) {
+                case 'image/png':
+                    $img = imagecreatefrompng($upload_file->getRealPath());
+                    break;
+                case 'image/gif':
+                    $img = imagecreatefromgif($upload_file->getRealPath());
+                    break;
+                case 'image/jpeg':
+                case 'image/jpg':
+                default:
+                    $img = imagecreatefromjpeg($upload_file->getRealPath());
+                    $exif = read_exif_data($upload_file->getRealPath());
+                    if (isset($exif['Orientation'])) {
+                        switch ($exif['Orientation']) {
+                            case 8:
+                                $img = imagerotate($img, 90, 0);
+                                break;
+                            case 3:
+                                $img = imagerotate($img, 180, 0);
+                                break;
+                            case 6:
+                                $img = imagerotate($img, -90, 0);
+                                break;
+                        }
+                    }
+            }
+
+            imagepng($img, $upload_file->getRealPath());
+
+            return $img;
+        } else {
+            return null;
+        }
+    }
+
+    private function saveThumb($img, $original_name, $suffix)
+    {
+        foreach ($this->thumb_sizes as $size_code => $size) {
+            if (is_int($size_code) && $size_code < count($this->thumb_sizes)) {
+                $size_name = $size;
+            } else {
+                $size_name = $size_code;
+            }
+
+            $thumb_name   = $this->basepath . $original_name . '_' . $size_name . '.' . $suffix;
+            $main_image   = $original_name . '.' . $suffix;
+            $tmp_filename = 'tmp/' . $main_image;
+
+            $tmp_thumb = $this->resizeThumb($img, $size);
+
+            // save tmp image
+            \Storage::disk('local')->put($tmp_filename, \Storage::get($this->basepath . $main_image));
+            $tmp_path = \Storage::disk('local')->getDriver()->getAdapter()->getPathPrefix();
+
+            // save thumbnail image
+            imagepng($tmp_thumb, $tmp_path . $tmp_filename);
+            $tmp_file = \Storage::disk('local')->get($tmp_filename);
+            \Storage::put($thumb_name, $tmp_file);
+
+            // remove tmp image
+            \Storage::disk('local')->delete($tmp_filename);
+        }
+    }
+
+    private function resizeThumb($img, $size)
+    {
+        $width        = imagesx($img);
+        $height       = imagesy($img);
+        $arr_size     = explode('x', $size);
+        $thumb_width  = (int)$arr_size[0];
+        $thumb_height = (int)$arr_size[1];
+
+        // create a new temporary thumbnail image
+        $tmp_thumb = imagecreatetruecolor($thumb_width, $thumb_height);
+
+        $img = $this->cropThumb($img, $width, $height, $thumb_width, $thumb_height);
+
+        // copy and resize original image into thumbnail image
+        imagecopyresized($tmp_thumb, $img, 0, 0, 0, 0, $thumb_width, $thumb_height, $width, $height);
+
+        return $tmp_thumb;
+    }
+
+    private function cropThumb($img, &$width, &$height, $thumb_width, $thumb_height)
+    {
+        $image_ratio = $height/$width;
+        $thumb_ratio = $thumb_height/$thumb_width;
+
+        if ($image_ratio !== $thumb_ratio) {
+            if ($image_ratio < $thumb_ratio) {
+                $new_width = $thumb_width*$height/$thumb_height;
+
+                $square = [
+                    'x' => ($width - $new_width)/2,
+                    'y' => 0,
+                    'width' => $new_width,
+                    'height' => $height
+                ];
+
+                $width = $new_width;
+            } else if ($image_ratio > $thumb_ratio) {
+                $new_height = $thumb_height*$width/$thumb_width;
+
+                $square = [
+                    'x' => 0,
+                    'y' => ($height - $new_height)/2,
+                    'width' => $width,
+                    'height' => $new_height
+                ];
+
+                $height = $new_height;
+            }
+
+            $img = imagecrop($img, $square);
+        }
+
+        return $img;
     }
 }
