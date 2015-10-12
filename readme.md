@@ -4,21 +4,21 @@
 
 Laravel File API is good way to handle files with Laravel Storage.
 
-### Install File API
+### Installation
 
-composer.json:
+    1. Install File API
 
-    "require" : {
-        "unisharp/laravel-fileapi" : "dev-master"
-    }, 
-    "repositories": {
-        "type": "git",
-        "url": "https://github.com/UniSharp/laravel-fileapi.git
-    }
+        composer require unisharp/laravel-fileapi
 
-save it and then 
+    1. Set service provider in `config/app.php`
 
-    composer update    
+        Unisharp\FileApi\FileApiServiceProvider::class,
+
+    1. publish config file
+
+        php artisan vendor:publish --tag=fileapi_config
+
+    1. fill the path in config/fileapi.php, it will generate routes for your files.
 
 ### Initialize File API
 
@@ -31,43 +31,20 @@ or
     $fa = new FileApi('/images'); # initialize it by giving a base path
     
 
-### Save to Storage By Giving Lravel Upload File
+### Save to Storage By Giving Uploaded File
 
-* Normal Usage
-
-    get unique filename
+* Default Usage : get unique filename
 
         $file = $fa->save(\Input::file('image')); // => wfj412.jpg
     
-    or input files is an array
-    
-        $files = [];
-        foreach (\Input::file('images') as $file) {
-            $files []= $fa->save('images');
-        }
-    
 * Custimize your upload file name
 
-        $file = $fa->save('image', 'custimized_filename'); // => custimized_filename.jpg
+        $file = $fa->save(\Input::file('image'), 'custimized_filename'); // => custimized_filename.jpg
           
 
 ### Get file fullpath (abstract path from Laravel Storage)
 
     $fa->getPath('wfj412.jpg'); // => '/images/wfj412.jpg'
-    
-### Routing your files
-
-All uploaded files cannot found in public folder, because FileApi use Laravel Storage to store them.  
-You can write a routing rules to get it. it will response file content and use http cache by default.
-
-    Route::get('/upload/{filename}', function ($filename) {
-        $fa = new FileApi();
-        return $fa->getResponse($filename);
-    });
-    
-and it can add headers array by optional
-
-    return $fa->getResponse($filename, ['Content-Disposition', 'attachement']);
     
 ### Parse File Path to URL
 if you store your file into cloud storage and you want to get url cloud site,

@@ -8,7 +8,9 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 class FileApi
 {
     protected $basepath;
-    protected $thumb_sizes = ['S' => '96x96', 'M' => '256x256', 'L' => '480x480'];
+    protected $default_sizes = ['S' => '96x96', 'M' => '256x256', 'L' => '480x480'];
+    protected $thumb_sizes = null;
+    protected $shouldCropThumb = false;
 
     public function __construct($basepath = '/')
     {
@@ -42,6 +44,13 @@ class FileApi
         if (!empty($thumb_sizes)) {
             $this->thumb_sizes = $thumb_sizes;
         }
+
+        return $this;
+    }
+
+    public function crop()
+    {
+        $this->shouldCropThumb = true;
 
         return $this;
     }
@@ -151,7 +160,7 @@ class FileApi
 
         \File::delete($upload_file->getRealPath());
 
-        if (!is_null($img) && !empty($this->thumb_sizes)) {
+        if (!is_null($img) && !empty($this->getThumbSizes())) {
             $this->saveThumb($img, $original_name, $suffix);
         }
 
@@ -200,9 +209,9 @@ class FileApi
 
     private function saveThumb($img, $original_name, $suffix)
     {
-        foreach ($this->thumb_sizes as $size_code => $size) {
-            if (is_int($size_code) && $size_code < count($this->thumb_sizes)) {
-                $size_name = $size;
+        foreach ($this->getThumbSizes() as $size_code => $size) {
+            if (is_int($size_code) && $size_code < count($this->getThumbSizes())) {
+                $size_name = 'L';
             } else {
                 $size_name = $size_code;
             }
@@ -211,7 +220,7 @@ class FileApi
             $main_image   = $original_name . '.' . $suffix;
             $tmp_filename = 'tmp/' . $main_image;
 
-            $tmp_thumb = $this->resizeThumb($img, $size);
+            $tmp_thumb = $this->resizeOrCropThumb($img, $size);
 
             // save tmp image
             \Storage::disk('local')->put($tmp_filename, \Storage::get($this->basepath . $main_image));
@@ -227,7 +236,7 @@ class FileApi
         }
     }
 
-    private function resizeThumb($img, $size)
+    private function resizeOrCropThumb($img, $size)
     {
         $width        = imagesx($img);
         $height       = imagesy($img);
@@ -235,15 +244,24 @@ class FileApi
         $thumb_width  = (int)$arr_size[0];
         $thumb_height = (int)$arr_size[1];
 
+        if ($this->thumbShouldCrop()) {
+            $img = $this->cropThumb($img, $width, $height, $thumb_width, $thumb_height);
+        } else {
+            $this->resizeThumb($width, $height, $thumb_width, $thumb_height);
+        }
+
         // create a new temporary thumbnail image
         $tmp_thumb = imagecreatetruecolor($thumb_width, $thumb_height);
-
-        $img = $this->cropThumb($img, $width, $height, $thumb_width, $thumb_height);
 
         // copy and resize original image into thumbnail image
         imagecopyresized($tmp_thumb, $img, 0, 0, 0, 0, $thumb_width, $thumb_height, $width, $height);
 
         return $tmp_thumb;
+    }
+
+    private function thumbShouldCrop()
+    {
+        return $this->shouldCropThumb;
     }
 
     private function cropThumb($img, &$width, &$height, $thumb_width, $thumb_height)
@@ -280,5 +298,32 @@ class FileApi
         }
 
         return $img;
+    }
+
+    private function resizeThumb($width, $height, &$thumb_width, &$thumb_height)
+    {
+        $image_ratio = $height/$width;
+        $thumb_ratio = $thumb_height/$thumb_width;
+
+        if ($image_ratio !== $thumb_ratio) {
+            if ($image_ratio < $thumb_ratio) {
+                $thumb_height = $thumb_width*$height/$width;
+            } else if ($image_ratio > $thumb_ratio) {
+                $thumb_width = $thumb_height*$width/$height;
+            }
+        }
+    }
+
+    private function getThumbSizes()
+    {
+        $config = config('fileapi.default_thumbs');
+
+        if (!is_null($this->thumb_sizes)) {
+            return $this->thumb_sizes;
+        } else if (!is_null($config)) {
+            return $config;
+        } else {
+            return $this->default_sizes;
+        }
     }
 }

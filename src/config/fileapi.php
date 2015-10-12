@@ -15,4 +15,6 @@ return [
 
     'path' => ['/images/event/'],
 
+    'default_thumbs' => ['S' => '96x96', 'M' => '256x256', 'L' => '480x480'],
+
 ];
