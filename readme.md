@@ -8,15 +8,15 @@ Laravel File API is good way to handle files with Laravel Storage.
 
 1. Install File API
 
-    composer require unisharp/laravel-fileapi
+    `composer require unisharp/laravel-fileapi`
 
 1. Set service provider in `config/app.php`
 
-    Unisharp\FileApi\FileApiServiceProvider::class,
+    `Unisharp\FileApi\FileApiServiceProvider::class,`
 
 1. publish config file
 
-    php artisan vendor:publish --tag=fileapi_config
+    `php artisan vendor:publish --tag=fileapi_config`
 
 1. fill the path in config/fileapi.php, it will generate routes for your files.
 
