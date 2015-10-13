@@ -46,7 +46,22 @@ or
 * Custimize your upload file name
 
         $file = $fa->save(\Input::file('image'), 'custimized_filename'); // => custimized_filename.jpg
-          
+
+### Save thumbnails
+
+* By default will set three thumbs(equal scaling)
+
+        $file = $fa->save(\Input::file('image'));
+
+* Set custom thumb sizes
+
+        $file = $fa
+          ->thumbs(['S' => '150x100', 'M' => '300x200', 'L' => '450x300'])
+          ->save(\Input::file('image'));
+
+* make cropped thumbs
+        
+        $file = $fa->crop()->save(\Input::file('image'));
 
 ### Get file fullpath (abstract path from Laravel Storage)
 
