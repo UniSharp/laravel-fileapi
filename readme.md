@@ -52,18 +52,13 @@ in `config/fileapi.php`
 
 ### Initialize File API
 
-    ```php
     use \Unisharp\FileApi\FileApi;
-    
     $fa = new FileApi();
-    ```
     
 or
     
-    ```php
     $fa = new FileApi('/images/event/'); # initialize it by giving a base path
     $fa_article = new FileApi('/images/article/'); # initiate another instance
-    ```
     
 
 ### Save to Storage By Giving Uploaded File
@@ -104,17 +99,13 @@ or
 
 ### Get file fullpath (abstract path from Laravel Storage)
 
-```php
     $fa->getPath('wfj412.jpg'); // => '/images/event/wfj412.jpg'
-```
     
 ### Parse File Path to URL
 if you store your file into cloud storage and you want to get url cloud site,
 you can use url() method to get it
 
-```php
     echo $fa->getUrl('wfjsdf.jpg'); // => "https://s3-ap-northeast-1.amazonaws.com/xxx/xxx/55c1e027caa62L.png"
-```
     
 ### Work with Laravel Storage
 
