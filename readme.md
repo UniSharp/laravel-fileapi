@@ -24,7 +24,15 @@ Laravel File API is good way to handle files with Laravel Storage.
         php artisan vendor:publish --tag=fileapi_config
     ```
 
-1. fill the path in config/fileapi.php, it will generate routes for your files.
+### Config
+
+1. fill in the storage path, it will generate routes for your files.
+
+        'path' => ['/images/event/'],
+
+1. set default thumb sizes(by key and value)
+
+        'default_thumbs' => ['S' => '96x96', 'M' => '256x256', 'L' => '480x480'],
 
 ### Initialize File API
 
