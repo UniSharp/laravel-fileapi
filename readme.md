@@ -1,14 +1,18 @@
-## Laravel File API
+# Laravel File API
 
-### Introduction
+## Features
 
-Laravel File API is good way to handle files with Laravel Storage.
+ * Handle files with Laravel Storage.
+ * Load files through Laravel routing instead of public path.
+ * Save images with thumbs, sizes are customisable.
 
-### Installation
+## Installation
 
 1. Install File API
 
-    `composer require unisharp/laravel-fileapi`
+    ```php
+    composer require unisharp/laravel-fileapi
+    ```
 
 1. Set service provider in `config/app.php`
 
@@ -18,9 +22,11 @@ Laravel File API is good way to handle files with Laravel Storage.
 
 1. publish config file
 
-    `php artisan vendor:publish --tag=fileapi_config`
+    ```php
+    php artisan vendor:publish --tag=fileapi_config
+    ```
 
-### Config
+## Config
 
 in `config/fileapi.php`
 
@@ -49,19 +55,20 @@ in `config/fileapi.php`
     ```php
     'default_thumbs' => ['S' => '96x96', 'M' => '256x256', 'L' => '480x480'],
     ```
+    
+## Usage
 
 ### Initialize File API
 
-    use \Unisharp\FileApi\FileApi;
-    $fa = new FileApi();
+```php
+use \Unisharp\FileApi\FileApi;
     
-or
-    
-    $fa = new FileApi('/images/event/'); # initialize it by giving a base path
-    $fa_article = new FileApi('/images/article/'); # initiate another instance
-    
+$fa = new FileApi(); # use default path (as '/images/')
+$fa_event = new FileApi('/images/event/'); # initialize it by giving a base path
+$fa_article = new FileApi('/images/article/'); # initiate another instance
+```
 
-### Save to Storage By Giving Uploaded File
+### Save By Giving Uploaded File
 
 * Default Usage : get unique filename
 
@@ -72,40 +79,57 @@ or
 * Custimize your upload file name
 
     ```php
-    $file = $fa->save(\Input::file('main_image'), 'custimized_filename'); // => custimized_filename.jpg
+    $file = $fa->save(\Input::file('main_image'), 'custom-file-name'); // => custom-file-name.jpg
     ```
-
-### Save thumbnails
-
+    
 * By default will set three thumbs(equal scaling)
 
-    ```php
-    $file = $fa->save(\Input::file('main_image'));
-    ```
+### Thumbnail functions
 
 * Set custom thumb sizes
 
     ```php
     $file = $fa
-        ->thumbs(['S' => '150x100', 'M' => '300x200', 'L' => '450x300'])
+        ->thumbs([
+        	'S' => '150x100',
+        	'M' => '300x200',
+        	'L' => '450x300'
+        	])
         ->save(\Input::file('main_image'));
     ```
 
 * make cropped thumbs
         
-    ```php
-    $file = $fa->crop()->save(\Input::file('main_image'));
-    ```
+	```php
+	$file = $fa->crop()->save(\Input::file('main_image'));
+	```
+
+### Get image url
+
+```php
+$fa->get('wfj412.jpg');        // => get image url of 'L' size
+$fa->get('wfj412.jpg', 'M');   // => get image url of 'M' size
+$fa->get('wfj412.jpg', 'full); // => get image url of full size
+```
+	
+### Delete image and thumbs
+
+```php
+$fa->drop('wfj412.jpg');
+```
 
 ### Get file fullpath (abstract path from Laravel Storage)
 
-    $fa->getPath('wfj412.jpg'); // => '/images/event/wfj412.jpg'
+```php
+$fa->getPath('wfj412.jpg'); // => '/images/event/wfj412.jpg'
+```  
     
 ### Parse File Path to URL
-if you store your file into cloud storage and you want to get url cloud site,
-you can use url() method to get it
+if you store your file into cloud storage and you want to get url cloud site, you can use url() method to get it
 
-    echo $fa->getUrl('wfjsdf.jpg'); // => "https://s3-ap-northeast-1.amazonaws.com/xxx/xxx/55c1e027caa62L.png"
+```php
+echo $fa->getUrl('wfjsdf.jpg'); // => "https://s3-ap-northeast-1.amazonaws.com/xxx/xxx/55c1e027caa62L.png"
+```
     
 ### Work with Laravel Storage
 
