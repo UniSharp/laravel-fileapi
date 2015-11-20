@@ -29,14 +29,17 @@ class FileApi
     {
         // Cut original file name
         $file = explode('.', $filename);
+        $file_path = '';
 
         if (empty($size) && \Storage::exists($this->basepath . $file[0] . '_L.' . $file[1])) {
-            return $this->basepath . $file[0] . '_L.' . $file[1];
+            $file_path = $this->basepath . $file[0] . '_L.' . $file[1];
         } else if (\Storage::exists($this->basepath . $file[0] . '_' . $size . '.' . $file[1])) {
-            return $this->basepath . $file[0] . '_' . $size . '.' . $file[1];
+            $file_path = $this->basepath . $file[0] . '_' . $size . '.' . $file[1];
         } else {
-            return $this->basepath . $filename;
+            $file_path = $this->basepath . $filename;
         }
+        
+        return url($file_path);
     }
 
     public function thumbs($thumb_sizes = array())
