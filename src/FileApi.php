@@ -31,6 +31,10 @@ class FileApi
         $file = explode('.', $filename);
         $file_path = '';
 
+        if (empty($filename)) {
+            return '';
+        }
+        
         if (empty($size) && \Storage::exists($this->basepath . $file[0] . '_L.' . $file[1])) {
             $file_path = $this->basepath . $file[0] . '_L.' . $file[1];
         } else if (\Storage::exists($this->basepath . $file[0] . '_' . $size . '.' . $file[1])) {
