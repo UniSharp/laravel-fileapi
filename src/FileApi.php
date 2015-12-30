@@ -27,6 +27,9 @@ class FileApi
 
     public function get($filename, $size = null)
     {
+        if (empty($filename)) {
+            return '';
+        }
         // Cut original file name
         $file = explode('.', $filename);
         $file_path = '';
