@@ -40,7 +40,7 @@ class FileApi
         
         if (empty($size) && \Storage::exists($this->basepath . $file[0] . '_L.' . $file[1])) {
             $file_path = $this->basepath . $file[0] . '_L.' . $file[1];
-        } else if (\Storage::exists($this->basepath . $file[0] . '_' . $size . '.' . $file[1])) {
+        } elseif (\Storage::exists($this->basepath . $file[0] . '_' . $size . '.' . $file[1])) {
             $file_path = $this->basepath . $file[0] . '_' . $size . '.' . $file[1];
         } else {
             $file_path = $this->basepath . $filename;
@@ -193,19 +193,23 @@ class FileApi
                 case 'image/jpg':
                 default:
                     $img = imagecreatefromjpeg($upload_file->getRealPath());
-                    $exif = read_exif_data($upload_file->getRealPath());
-                    if (isset($exif['Orientation'])) {
-                        switch ($exif['Orientation']) {
-                            case 8:
-                                $img = imagerotate($img, 90, 0);
-                                break;
-                            case 3:
-                                $img = imagerotate($img, 180, 0);
-                                break;
-                            case 6:
-                                $img = imagerotate($img, -90, 0);
-                                break;
+                    try {
+                        $exif = exif_read_data($upload_file->getRealPath());
+                        if (isset($exif['Orientation'])) {
+                            switch ($exif['Orientation']) {
+                                case 8:
+                                    $img = imagerotate($img, 90, 0);
+                                    break;
+                                case 3:
+                                    $img = imagerotate($img, 180, 0);
+                                    break;
+                                case 6:
+                                    $img = imagerotate($img, -90, 0);
+                                    break;
+                            }
                         }
+                    } catch (\Exception $e) {
+                        //ignore cannot read exif
                     }
             }
 
@@ -291,7 +295,7 @@ class FileApi
                 ];
 
                 $width = $new_width;
-            } else if ($image_ratio > $thumb_ratio) {
+            } elseif ($image_ratio > $thumb_ratio) {
                 $new_height = $thumb_height*$width/$thumb_width;
 
                 $square = [
@@ -318,7 +322,7 @@ class FileApi
         if ($image_ratio !== $thumb_ratio) {
             if ($image_ratio < $thumb_ratio) {
                 $thumb_height = $thumb_width*$height/$width;
-            } else if ($image_ratio > $thumb_ratio) {
+            } elseif ($image_ratio > $thumb_ratio) {
                 $thumb_width = $thumb_height*$width/$height;
             }
         }
@@ -330,7 +334,7 @@ class FileApi
 
         if (!is_null($this->thumb_sizes)) {
             return $this->thumb_sizes;
-        } else if (!is_null($config)) {
+        } elseif (!is_null($config)) {
             return $config;
         } else {
             return $this->default_sizes;
