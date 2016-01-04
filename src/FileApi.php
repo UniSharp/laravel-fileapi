@@ -188,6 +188,7 @@ class FileApi
                     break;
                 case 'image/gif':
                     $img = imagecreatefromgif($upload_file->getRealPath());
+                    imagepng($img, $upload_file->getRealPath());
                     break;
                 case 'image/jpeg':
                 case 'image/jpg':
@@ -208,12 +209,13 @@ class FileApi
                                     break;
                             }
                         }
+                        imagepng($img, $upload_file->getRealPath());
                     } catch (\Exception $e) {
                         //ignore cannot read exif
                     }
             }
 
-            imagepng($img, $upload_file->getRealPath());
+
 
             return $img;
         } else {
