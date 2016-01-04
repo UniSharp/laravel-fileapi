@@ -266,10 +266,11 @@ class FileApi
 
         // create a new temporary thumbnail image
         $tmp_thumb = imagecreatetruecolor($thumb_width, $thumb_height);
+        $whitecolor = imagecolorallocatealpha($tmp_thumb, 255, 255, 255, 0);
+        imagefill($tmp_thumb, 0, 0, $whitecolor);
 
         // copy and resize original image into thumbnail image
-        imagecopyresized($tmp_thumb, $img, 0, 0, 0, 0, $thumb_width, $thumb_height, $width, $height);
-
+        imagecopyresampled($tmp_thumb, $img, 0, 0, 0, 0, $thumb_width, $thumb_height, $width, $height);
         return $tmp_thumb;
     }
 
