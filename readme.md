@@ -55,6 +55,24 @@ in `config/fileapi.php`
     ```php
     'default_thumbs' => ['S' => '96x96', 'M' => '256x256', 'L' => '480x480'],
     ```
+
+1. choose whether you want to enable upload directly by url(api)
+
+    ```php
+    'enable_api_upload' => false,
+    ```
+
+    and upload to url by below
+
+    ```
+    POST /upload/images/event/the-file-name
+    ```
+
+1. and you might also want to set some middlewares to protect the upload route
+
+    ```php
+    'middlewares' => [],
+    ```
     
 ## Usage
 
