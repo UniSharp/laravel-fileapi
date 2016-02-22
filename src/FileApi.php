@@ -24,6 +24,21 @@ class FileApi
 
         $this->basepath = $basepath;
     }
+    
+    static public function getFile($path, $filename, $size = null)
+    {
+        // Cut original file name
+        $file = explode('.', $filename);
+        if(empty($file[0]) && empty($file[1])) return false;
+
+        if (empty($size) && \Storage::exists($path . $file[0] . '_L.' . $file[1])) {
+            return $path . $file[0] . '_L.' . $file[1];
+        } else if (\Storage::exists($path . $file[0] . '_' . $size . '.' . $file[1])) {
+            return $path . $file[0] . '_' . $size . '.' . $file[1];
+        } else {
+            return false;
+        }
+    }
 
     public function get($filename, $size = null)
     {
