@@ -12,13 +12,13 @@ class FileApi
     protected $thumb_sizes = null;
     protected $shouldCropThumb = false;
 
-    public function __construct($basepath = '/')
+    public function __construct($basepath = DIRECTORY_SEPARATOR)
     {
-        if (mb_substr($basepath, -1, 1, 'utf8') != '/') {
-            $basepath .= '/';
+        if (mb_substr($basepath, -1, 1, 'utf8') != DIRECTORY_SEPARATOR) {
+            $basepath .= DIRECTORY_SEPARATOR;
         }
 
-        if (mb_substr($basepath, 0, 1, 'utf8') == '/') {
+        if (mb_substr($basepath, 0, 1, 'utf8') == DIRECTORY_SEPARATOR) {
             $basepath = mb_substr($basepath, 1, null, 'utf8');
         }
 
@@ -73,8 +73,8 @@ class FileApi
 
     public function getPath($filename)
     {
-        if (mb_substr($this->basepath, -1, 1, 'utf8') != '/') {
-            $this->basepath .= '/';
+        if (mb_substr($this->basepath, -1, 1, 'utf8') != DIRECTORY_SEPARATOR) {
+            $this->basepath .= DIRECTORY_SEPARATOR;
         }
 
         if (preg_match('/^\//', $filename)) {
@@ -234,7 +234,7 @@ class FileApi
 
             $thumb_name   = $this->basepath . $original_name . '_' . $size_name . '.' . $suffix;
             $main_image   = $original_name . '.' . $suffix;
-            $tmp_filename = 'tmp/' . $main_image;
+            $tmp_filename = 'tmp' . DIRECTORY_SEPARATOR . $main_image;
 
             $tmp_thumb = $this->resizeOrCropThumb($img, $size);
 
