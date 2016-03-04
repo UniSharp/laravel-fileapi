@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Event;
 
 class FileController extends Controller
 {
-    public function images($target, $param)
+    public function images($target, $param = null)
     {
         $fa = new \Unisharp\FileApi\FileApi('images/' . $target);
         $filename = $fa->save(request()->file('image'));
@@ -31,7 +31,7 @@ class FileController extends Controller
         ];
     }
 
-    public function videos($target, $param)
+    public function videos($target, $param = null)
     {
         $fa = new \Unisharp\FileApi\FileApi('videos/' . $target);
         $filename = $fa->save(request()->file('video'));
