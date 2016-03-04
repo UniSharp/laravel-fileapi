@@ -29,6 +29,7 @@ return [
     */
 
     'enable_api_upload' => false,
+    'api_prefix' => '/api/v1',
 
     'middlewares' => [], // middlewares that wrap the api upload route
 
