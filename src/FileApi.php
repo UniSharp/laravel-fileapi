@@ -135,8 +135,7 @@ class FileApi
 
         // Find all images in basepath
         $allFiles = \Storage::files($this->basepath);
-        $files = array_filter($allFiles, function ($file) use ($origin_name)
-        {
+        $files = array_filter($allFiles, function ($file) use ($origin_name) {
             return preg_match('/^(.*)'.$origin_name.'(.*)$/', $file);
         });
 

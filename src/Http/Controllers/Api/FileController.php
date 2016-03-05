@@ -4,8 +4,6 @@ namespace Unisharp\FileApi\Http\Controllers\Api;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Event;
-
 
 class FileController extends Controller
 {

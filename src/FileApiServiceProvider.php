@@ -2,12 +2,12 @@
 
 use Illuminate\Support\ServiceProvider;
 
-
 /**
  * Class FileapiServiceProvider
  * @package Unisharp\Fileapi
  */
-class FileApiServiceProvider extends ServiceProvider {
+class FileApiServiceProvider extends ServiceProvider
+{
 
     /**
      * Bootstrap the application services.
