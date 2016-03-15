@@ -45,8 +45,15 @@ class FileApi
         } else {
             $file_path = $this->basepath . $filename;
         }
-        
-        return url($file_path);
+
+        if (\Config::get('filesystems.default') == 's3') {
+            return \Storage::getDriver()->getAdapter()->getClient()->getObjectUrl(
+                \Storage::getDriver()->getAdapter()->getBucket(),
+                $this->basepath . $filename
+            );
+        } else {
+            return url($file_path);
+        }
     }
 
     public function thumbs($thumb_sizes = array())

@@ -4,6 +4,7 @@ namespace Unisharp\FileApi\Http\Controllers\Api;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Unisharp\FileApi\FileApi;
 
 class FileController extends Controller
 {
@@ -24,7 +25,7 @@ class FileController extends Controller
             ],
             'data' => [
                 'filename' => $filename,
-                'path' => "images/${target}/{$filename}"
+                'path' => with(new FileApi("images/${target}/"))->get($filename)
             ]
         ];
     }
@@ -36,13 +37,13 @@ class FileController extends Controller
         event("video.${target}.created", [
             'param' => $param,
             'filename' => $filename,
-            'path' => "videos/${target}/{$filename}",
+            'path' => with(new FileApi("videos/${target}/"))->get($filename)
         ]);
 
         return [
             'status' => [
                 'code' => 200,
-                'message' =>'Success to upload image' ,
+                'message' => 'Success to upload image',
             ],
             'data' => [
                 'filename' => $filename,
