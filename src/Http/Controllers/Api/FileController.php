@@ -25,7 +25,7 @@ class FileController extends Controller
             ],
             'data' => [
                 'filename' => $filename,
-                'path' => with(new FileApi("images/${target}/"))->get($filename)
+                'path' => with(new FileApi("images/${target}/"))->get($filename, 'origin')
             ]
         ];
     }
@@ -37,7 +37,7 @@ class FileController extends Controller
         event("video.${target}.created", [
             'param' => $param,
             'filename' => $filename,
-            'path' => with(new FileApi("videos/${target}/"))->get($filename)
+            'path' => with(new FileApi("videos/${target}/"))->get($filename, 'origin')
         ]);
 
         return [
