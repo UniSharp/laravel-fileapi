@@ -18,16 +18,23 @@ class FileController extends Controller
             'path' => "images/${target}/{$filename}",
         ]);
 
-        return [
-            'status' => [
-                'code' => 200,
-                'message' =>'Success to upload image' ,
-            ],
-            'data' => [
-                'filename' => $filename,
-                'path' => with(new FileApi("images/${target}/"))->get($filename, 'origin')
-            ]
-        ];
+
+        if (function_exists('carrier')) {
+            $response_msg = carrier()->get('response_msg');
+        } else {
+            $response_msg = [
+                'status' => [
+                    'code' => 200,
+                    'message' =>'Success to upload image' ,
+                ],
+                'data' => [
+                    'filename' => $filename,
+                    'path' => with(new FileApi("images/${target}/"))->get($filename, 'origin')
+                ]
+            ];
+        }
+
+        return $response_msg;
     }
 
     public function videos($target, $param = null)
@@ -40,15 +47,21 @@ class FileController extends Controller
             'path' => with(new FileApi("videos/${target}/"))->get($filename, 'origin')
         ]);
 
-        return [
-            'status' => [
-                'code' => 200,
-                'message' => 'Success to upload image',
-            ],
-            'data' => [
-                'filename' => $filename,
-                'path' => "images/${target}/{$filename}"
-            ]
-        ];
+        if (function_exists('carrier')) {
+            $response_msg = carrier()->get('response_msg');
+        } else {
+            $response_msg = [
+                'status' => [
+                    'code' => 200,
+                    'message' => 'Success to upload image',
+                ],
+                'data' => [
+                    'filename' => $filename,
+                    'path' => "images/${target}/{$filename}"
+                ]
+            ];
+        }
+
+        return $response_msg;
     }
 }
