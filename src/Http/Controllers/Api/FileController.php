@@ -19,7 +19,7 @@ class FileController extends Controller
         ]);
 
 
-        if (function_exists('carrier')) {
+        if (function_exists('carrier') && !empty(carrier()->get('response_msg'))) {
             $response_msg = carrier()->get('response_msg');
         } else {
             $response_msg = [
@@ -44,20 +44,20 @@ class FileController extends Controller
         event("video.${target}.created", [
             'param' => $param,
             'filename' => $filename,
-            'path' => with(new FileApi("videos/${target}/"))->get($filename, 'origin')
+            'path' => "videos/${target}/{$filename}"
         ]);
 
-        if (function_exists('carrier')) {
+        if (function_exists('carrier') && !empty(carrier()->get('response_msg'))) {
             $response_msg = carrier()->get('response_msg');
         } else {
             $response_msg = [
                 'status' => [
                     'code' => 200,
-                    'message' => 'Success to upload image',
+                    'message' => 'Success to upload video',
                 ],
                 'data' => [
                     'filename' => $filename,
-                    'path' => "images/${target}/{$filename}"
+                    'path' => with(new FileApi("videos/${target}/"))->get($filename, 'origin')
                 ]
             ];
         }
