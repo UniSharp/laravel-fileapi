@@ -105,17 +105,17 @@ class FileApi
             $etag = md5($filetime);
             $time = date('r', $filetime);
             $expires = date('r', $filetime + 3600);
-            if (trim(\Request::header('If-None-Match'), '\'\"') != $etag ||
-                new \DateTime(\Request::header('If-Modified-Since')) != new \DateTime($time)
-            ) {
-                return response($file, 200, $headers)->header('Content-Type', \Storage::mimeType($path))
-                    ->setEtag($etag)
-                    ->setLastModified(new \DateTime($time))
-                    ->setExpires(new \DateTime($expires))
-                    ->setPublic();
+
+            $response = response(null, 304, $headers);
+
+            $file_content_changed = trim(\Request::header('If-None-Match'), '\'\"') != $etag;
+            $file_modified = new \DateTime(\Request::header('If-Modified-Since')) != new \DateTime($time);
+
+            if ($file_content_changed || $file_modified) {
+                $response = response($file, 200, $headers)->header('Content-Type', \Storage::mimeType($path));
             }
 
-            return response(null, 304, $headers)
+            return $response
                 ->setEtag($etag)
                 ->setLastModified(new \DateTime($time))
                 ->setExpires(new \DateTime($expires))
@@ -188,7 +188,7 @@ class FileApi
                     break;
                 case 'image/gif':
                     $img = imagecreatefromgif($upload_file->getRealPath());
-                    imagepng($img, $upload_file->getRealPath());
+                    imagegif($img, $upload_file->getRealPath());
                     break;
                 case 'image/jpeg':
                 case 'image/jpg':
@@ -209,13 +209,11 @@ class FileApi
                                     break;
                             }
                         }
-                        imagepng($img, $upload_file->getRealPath());
+                        imagejpeg($img, $upload_file->getRealPath());
                     } catch (\Exception $e) {
                         //ignore cannot read exif
                     }
             }
-
-
 
             return $img;
         } else {
@@ -283,15 +281,15 @@ class FileApi
 
     private function cropThumb($img, &$width, &$height, $thumb_width, $thumb_height)
     {
-        $image_ratio = $height/$width;
-        $thumb_ratio = $thumb_height/$thumb_width;
+        $image_ratio = $height / $width;
+        $thumb_ratio = $thumb_height / $thumb_width;
 
         if ($image_ratio !== $thumb_ratio) {
             if ($image_ratio < $thumb_ratio) {
-                $new_width = $thumb_width*$height/$thumb_height;
+                $new_width = $thumb_width * $height / $thumb_height;
 
                 $square = [
-                    'x' => ($width - $new_width)/2,
+                    'x' => ($width - $new_width) / 2,
                     'y' => 0,
                     'width' => $new_width,
                     'height' => $height
@@ -299,11 +297,11 @@ class FileApi
 
                 $width = $new_width;
             } elseif ($image_ratio > $thumb_ratio) {
-                $new_height = $thumb_height*$width/$thumb_width;
+                $new_height = $thumb_height * $width / $thumb_width;
 
                 $square = [
                     'x' => 0,
-                    'y' => ($height - $new_height)/2,
+                    'y' => ($height - $new_height) / 2,
                     'width' => $width,
                     'height' => $new_height
                 ];
@@ -319,14 +317,14 @@ class FileApi
 
     private function resizeThumb($width, $height, &$thumb_width, &$thumb_height)
     {
-        $image_ratio = $height/$width;
-        $thumb_ratio = $thumb_height/$thumb_width;
+        $image_ratio = $height / $width;
+        $thumb_ratio = $thumb_height / $thumb_width;
 
         if ($image_ratio !== $thumb_ratio) {
             if ($image_ratio < $thumb_ratio) {
-                $thumb_height = $thumb_width*$height/$width;
+                $thumb_height = $thumb_width * $height / $width;
             } elseif ($image_ratio > $thumb_ratio) {
-                $thumb_width = $thumb_height*$width/$height;
+                $thumb_width = $thumb_height * $width / $height;
             }
         }
     }
