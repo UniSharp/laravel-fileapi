@@ -168,3 +168,63 @@ echo $fa->getUrl('wfjsdf.jpg'); // => "https://s3-ap-northeast-1.amazonaws.com/x
     ```php
     \Storage::mimeType($fa->getPath('wfj412.jpg'));
     ```
+## Auto Upload
+
+if `enable_api_upload=true` in `config/fileapi.php`, you can upload file to these two path
+
+1. Image
+
+    * head
+ 
+             POST /api/v1/images/{target}/{param?}
+    * body
+
+             image={file multipart body}
+  
+2. Video
+
+    * head
+
+            /api/v1/videos/{target}/{param?}
+
+    * body
+
+            video={file multipar body}
+  
+
+### After uploaded
+
+you add event listener to finish up after file uploaded, file api will fire `image.{target}.created` and
+`video.{target}.created`
+
+
+#### Step
+
+1. Write listener under `App\Listeners`
+
+        <?php
+
+        namespace App\Listeners;
+
+        class ArticleImageListener
+        {
+
+             public function handle($param, $filename, $path)
+            {
+                ... do something ...
+            }
+        }
+        
+2. Write event mapping in `Providers\EvnetService\Providers`
+
+            protected $listen = [
+                'image.article.created' => [
+                    'App\Listeners\ArticleImageListener'
+                ],
+            ];
+
+### Configurations
+
+    'enable_api_upload' => false, // auto upload api
+    'api_prefix' => '/api/v1',    // upload api url prefix
+    'middlewares' => [],          // middlewares that wrap the api upload route

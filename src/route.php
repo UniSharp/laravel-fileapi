@@ -15,9 +15,14 @@ $enable_api_upload = config('fileapi.enable_api_upload', true);
 
 if ($enable_api_upload) {
     Route::group(['middleware' => config('fileapi.middlewares', [])], function () {
-        Route::post('upload/{folder}/{sub_folder}/{filename}', function ($folder, $sub_folder, $filename) {
-            $fa = new \Unisharp\FileApi\FileApi($folder . DIRECTORY_SEPARATOR . $sub_folder);
-            $fa->save(request()->file('file'), $filename);
-        });
+        Route::post(
+            config('api_prifix', '/api/v1') . '/images/{target}/{param?}',
+            'Unisharp\FileApi\Http\Controllers\Api\FileController@images'
+        );
+
+        Route::post(
+            config('api_prifix', '/api/v1') . '/videos/{target}/{param?}',
+            'Unisharp\FileApi\Http\Controllers\Api\FileController@videos'
+        );
     });
 }
