@@ -2,6 +2,7 @@
 
 namespace Unisharp\FileApi;
 
+use Illuminate\Support\Facades\Storage;
 use League\Flysystem\FileNotFoundException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
@@ -54,6 +55,27 @@ class FileApi
         } else {
             return url($file_path);
         }
+    }
+
+    public function getWatermark($filename, $watermark)
+    {
+        $path = $this->basepath . $filename;
+        $image_types = array('image/png', 'image/gif', 'image/jpeg', 'image/jpg');
+        $watermark_image = $this->setTmpImage(base_path($watermark));
+        $image = $this->setTmpImage(storage_path('app/' . $path));
+        imagesavealpha($watermark_image, true);
+        imagesetbrush($image, $watermark_image);
+        $watermark_pos_x = imagesx($image) - imagesy($watermark_image);
+        $watermark_pos_y = imagesy($image) - imagesy($watermark_image);
+        imageline($image, $watermark_pos_x, $watermark_pos_y, $watermark_pos_x, $watermark_pos_y, IMG_COLOR_BRUSHED);
+        imagesavealpha($image, true);
+        if (!Storage::exists('images/wtermark')) {
+            Storage::makeDirectory('images/watermark');
+        }
+        imagepng($image, storage_path('app/images/watermark/' . $filename));
+
+        $this->basepath = 'images/watermark/';
+        return $this->getResponse($filename);
     }
 
     public function thumbs($thumb_sizes = array())
@@ -186,22 +208,23 @@ class FileApi
     private function setTmpImage($upload_file)
     {
         $image_types = array('image/png', 'image/gif', 'image/jpeg', 'image/jpg');
+        $image_path = $upload_file instanceof UploadedFile ? $upload_file->getRealPath() : $upload_file;
 
         if (in_array(\File::mimeType($upload_file), $image_types)) {
             switch (\File::mimeType($upload_file)) {
                 case 'image/png':
-                    $img = imagecreatefrompng($upload_file->getRealPath());
+                    $img = imagecreatefrompng($image_path);
                     break;
                 case 'image/gif':
-                    $img = imagecreatefromgif($upload_file->getRealPath());
-                    imagegif($img, $upload_file->getRealPath());
+                    $img = imagecreatefromgif($image_path);
+                    imagegif($img, $image_path);
                     break;
                 case 'image/jpeg':
                 case 'image/jpg':
                 default:
-                    $img = imagecreatefromjpeg($upload_file->getRealPath());
+                    $img = imagecreatefromjpeg($image_path);
                     try {
-                        $exif = exif_read_data($upload_file->getRealPath());
+                        $exif = exif_read_data($image_path);
                         if (isset($exif['Orientation'])) {
                             switch ($exif['Orientation']) {
                                 case 8:
@@ -215,7 +238,7 @@ class FileApi
                                     break;
                             }
                         }
-                        imagejpeg($img, $upload_file->getRealPath());
+                        imagejpeg($img, $image_path);
                     } catch (\Exception $e) {
                         //ignore cannot read exif
                     }
