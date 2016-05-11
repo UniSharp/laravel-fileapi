@@ -59,23 +59,36 @@ class FileApi
 
     public function getWatermark($filename, $watermark)
     {
-        $path = $this->basepath . $filename;
-        $image_types = array('image/png', 'image/gif', 'image/jpeg', 'image/jpg');
-        $watermark_image = $this->setTmpImage(base_path($watermark));
-        $image = $this->setTmpImage(storage_path('app/' . $path));
-        imagesavealpha($watermark_image, true);
-        imagesetbrush($image, $watermark_image);
-        $watermark_pos_x = imagesx($image) - imagesy($watermark_image);
-        $watermark_pos_y = imagesy($image) - imagesy($watermark_image);
-        imageline($image, $watermark_pos_x, $watermark_pos_y, $watermark_pos_x, $watermark_pos_y, IMG_COLOR_BRUSHED);
-        imagesavealpha($image, true);
-        if (!Storage::exists('images/wtermark')) {
-            Storage::makeDirectory('images/watermark');
-        }
-        imagepng($image, storage_path('app/images/watermark/' . $filename));
+        $origin_basepath = $this->basepath;
+        try {
+            $path = $this->basepath . $filename;
+            $image_types = array('image/png', 'image/gif', 'image/jpeg', 'image/jpg');
+            $watermark_image = $this->setTmpImage(base_path($watermark));
+            $image = $this->setTmpImage(storage_path('app/' . $path));
+            imagesavealpha($watermark_image, true);
+            imagesetbrush($image, $watermark_image);
+            $watermark_pos_x = imagesx($image) - imagesy($watermark_image);
+            $watermark_pos_y = imagesy($image) - imagesy($watermark_image);
+            imageline(
+                $image,
+                $watermark_pos_x,
+                $watermark_pos_y,
+                $watermark_pos_x,
+                $watermark_pos_y,
+                IMG_COLOR_BRUSHED
+            );
+            imagesavealpha($image, true);
+            if (!Storage::exists('images/wtermark')) {
+                Storage::makeDirectory('images/watermark');
+            }
+            imagepng($image, storage_path('app/images/watermark/' . $filename));
 
-        $this->basepath = 'images/watermark/';
-        return $this->getResponse($filename);
+            $this->basepath = 'images/watermark/';
+            return $this->getResponse($filename);
+        } catch (\Exception $e) {
+            $this->basepath = $origin_basepath;
+            return $this->getResponse($filename);
+        }
     }
 
     public function thumbs($thumb_sizes = array())
