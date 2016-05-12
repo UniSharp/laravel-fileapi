@@ -269,7 +269,7 @@ class FileApi
         $watermark_image = $this->setTmpImage(base_path($watermark));
         imagesavealpha($watermark_image, true);
         imagesetbrush($image, $watermark_image);
-        $watermark_pos_x = imagesx($image) - imagesy($watermark_image);
+        $watermark_pos_x = imagesx($image) - imagesy($watermark_image) - 100;
         $watermark_pos_y = ceil(imagesy($watermark_image) / 2) + 20;
         imageline(
             $image,
