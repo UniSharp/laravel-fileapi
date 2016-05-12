@@ -6,7 +6,7 @@ if (!empty($paths)) {
     foreach ($paths as $path) {
         Route::get($path.'{filename}/watermark', function ($filename) use ($path) {
             $entry = new \Unisharp\FileApi\FileApi($path);
-            return $entry->getWatermark($filename, config('fileapi.watermark'));
+            return redirect()->to($entry->get($filename, 'W'));
         });
     }
 

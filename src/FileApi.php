@@ -2,6 +2,7 @@
 
 namespace Unisharp\FileApi;
 
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use League\Flysystem\FileNotFoundException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -54,40 +55,6 @@ class FileApi
             );
         } else {
             return url($file_path);
-        }
-    }
-
-    public function getWatermark($filename, $watermark)
-    {
-        $origin_basepath = $this->basepath;
-        try {
-            $path = $this->basepath . $filename;
-            $image_types = array('image/png', 'image/gif', 'image/jpeg', 'image/jpg');
-            $watermark_image = $this->setTmpImage(base_path($watermark));
-            $image = $this->setTmpImage(storage_path('app/' . $path));
-            imagesavealpha($watermark_image, true);
-            imagesetbrush($image, $watermark_image);
-            $watermark_pos_x = imagesx($image) - imagesy($watermark_image);
-            $watermark_pos_y = imagesy($image) - imagesy($watermark_image);
-            imageline(
-                $image,
-                $watermark_pos_x,
-                $watermark_pos_y,
-                $watermark_pos_x,
-                $watermark_pos_y,
-                IMG_COLOR_BRUSHED
-            );
-            imagesavealpha($image, true);
-            if (!Storage::exists('images/wtermark')) {
-                Storage::makeDirectory('images/watermark');
-            }
-            imagepng($image, storage_path('app/images/watermark/' . $filename));
-
-            $this->basepath = 'images/watermark/';
-            return $this->getResponse($filename);
-        } catch (\Exception $e) {
-            $this->basepath = $origin_basepath;
-            return $this->getResponse($filename);
         }
     }
 
@@ -168,7 +135,6 @@ class FileApi
             abort(404);
         }
     }
-
     public function drop($filename)
     {
         // Cut original file name
@@ -213,6 +179,7 @@ class FileApi
 
         if (!is_null($img) && !empty($this->getThumbSizes())) {
             $this->saveThumb($img, $original_name, $suffix);
+            $this->mergeWatermark($img, $original_name, $suffix);
         }
 
         return $filename;
@@ -290,6 +257,42 @@ class FileApi
             // remove tmp image
             \Storage::disk('local')->delete($tmp_filename);
         }
+    }
+
+    private function mergeWatermark($image, $original_name, $suffix)
+    {
+        $watermark = config('fileapi.watermark');
+        if (!File::exists(base_path($watermark))) {
+            return null;
+        }
+
+        $watermark_image = $this->setTmpImage(base_path($watermark));
+        imagesavealpha($watermark_image, true);
+        imagesetbrush($image, $watermark_image);
+        $watermark_pos_x = imagesx($image) - imagesy($watermark_image);
+        $watermark_pos_y = ceil(imagesy($watermark_image) / 2) + 20;
+        imageline(
+            $image,
+            $watermark_pos_x,
+            $watermark_pos_y,
+            $watermark_pos_x,
+            $watermark_pos_y,
+            IMG_COLOR_BRUSHED
+        );
+        imagesavealpha($image, true);
+        $main_image   = $original_name . '.' . $suffix;
+        $tmp_filename = 'tmp' . DIRECTORY_SEPARATOR . $main_image;
+        $tmp_path = \Storage::disk('local')->getDriver()->getAdapter()->getPathPrefix();
+
+
+        $watermark_filename   = $this->basepath . $original_name . '_W' .  '.' . $suffix;
+        // save thumbnail image
+        imagepng($image, $tmp_path . $tmp_filename);
+        $tmp_file = \Storage::disk('local')->get($tmp_filename);
+        \Storage::put($watermark_filename, $tmp_file);
+
+        // remove tmp image
+        \Storage::disk('local')->delete($tmp_filename);
     }
 
     private function resizeOrCropThumb($img, $size)
