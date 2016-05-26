@@ -74,9 +74,9 @@ class FileApi
         return $this;
     }
 
-    public function save(UploadedFile $upload_file, $cus_name = null)
+    public function save(UploadedFile $upload_file, $cus_name = null, $can_make_watermark = false)
     {
-        $file = $this->moveFile($upload_file, $cus_name);
+        $file = $this->moveFile($upload_file, $cus_name, $can_make_watermark);
         return $file;
     }
 
@@ -157,7 +157,7 @@ class FileApi
      ***********  Private Functions *************
      ********************************************/
 
-    private function moveFile($upload_file, $cus_name)
+    private function moveFile($upload_file, $cus_name, $can_make_watermark = false)
     {
         $suffix = $upload_file->getClientOriginalExtension();
 
@@ -179,7 +179,9 @@ class FileApi
 
         if (!is_null($img) && !empty($this->getThumbSizes())) {
             $this->saveThumb($img, $original_name, $suffix);
-            $this->mergeWatermark($img, $original_name, $suffix);
+            if ($can_make_watermark) {
+                $this->mergeWatermark($img, $original_name, $suffix);
+            }
         }
 
         return $filename;
