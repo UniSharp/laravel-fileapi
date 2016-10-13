@@ -180,6 +180,7 @@ class FileApi
 
         if (!is_null($img) && !empty($this->getThumbSizes())) {
             $this->saveThumb($img, $original_name, $suffix);
+            $this->saveCompress($img, $original_name, $suffix);
             if ($can_make_watermark) {
                 $this->mergeWatermark($img, $original_name, $suffix);
             }
