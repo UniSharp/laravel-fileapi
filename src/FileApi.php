@@ -2,8 +2,6 @@
 
 namespace Unisharp\FileApi;
 
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Storage;
 use League\Flysystem\FileNotFoundException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
@@ -14,13 +12,13 @@ class FileApi
     protected $thumb_sizes = null;
     protected $shouldCropThumb = false;
 
-    public function __construct($basepath = DIRECTORY_SEPARATOR)
+    public function __construct($basepath = '/')
     {
-        if (mb_substr($basepath, -1, 1, 'utf8') != DIRECTORY_SEPARATOR) {
-            $basepath .= DIRECTORY_SEPARATOR;
+        if (mb_substr($basepath, -1, 1, 'utf8') != '/') {
+            $basepath .= '/';
         }
 
-        if (mb_substr($basepath, 0, 1, 'utf8') == DIRECTORY_SEPARATOR) {
+        if (mb_substr($basepath, 0, 1, 'utf8') == '/') {
             $basepath = mb_substr($basepath, 1, null, 'utf8');
         }
 
@@ -29,32 +27,15 @@ class FileApi
 
     public function get($filename, $size = null)
     {
-        if (empty($filename)) {
-            return '';
-        }
         // Cut original file name
         $file = explode('.', $filename);
-        $file_path = '';
 
-        if (empty($filename)) {
-            return '';
-        }
-        
         if (empty($size) && \Storage::exists($this->basepath . $file[0] . '_L.' . $file[1])) {
-            $file_path = $this->basepath . $file[0] . '_L.' . $file[1];
-        } elseif (\Storage::exists($this->basepath . $file[0] . '_' . $size . '.' . $file[1])) {
-            $file_path = $this->basepath . $file[0] . '_' . $size . '.' . $file[1];
+            return $this->basepath . $file[0] . '_L.' . $file[1];
+        } else if (\Storage::exists($this->basepath . $file[0] . '_' . $size . '.' . $file[1])) {
+            return $this->basepath . $file[0] . '_' . $size . '.' . $file[1];
         } else {
-            $file_path = $this->basepath . $filename;
-        }
-
-        if (\Config::get('filesystems.default') == 's3') {
-            return \Storage::getDriver()->getAdapter()->getClient()->getObjectUrl(
-                \Storage::getDriver()->getAdapter()->getBucket(),
-                $this->basepath . $filename
-            );
-        } else {
-            return url($file_path);
+            return $this->basepath . $filename;
         }
     }
 
@@ -74,16 +55,16 @@ class FileApi
         return $this;
     }
 
-    public function save(UploadedFile $upload_file, $cus_name = null, $can_make_watermark = false)
+    public function save(UploadedFile $upload_file, $cus_name = null)
     {
-        $file = $this->moveFile($upload_file, $cus_name, $can_make_watermark);
+        $file = $this->moveFile($upload_file, $cus_name);
         return $file;
     }
 
     public function getPath($filename)
     {
-        if (mb_substr($this->basepath, -1, 1, 'utf8') != DIRECTORY_SEPARATOR) {
-            $this->basepath .= DIRECTORY_SEPARATOR;
+        if (mb_substr($this->basepath, -1, 1, 'utf8') != '/') {
+            $this->basepath .= '/';
         }
 
         if (preg_match('/^\//', $filename)) {
@@ -114,17 +95,17 @@ class FileApi
             $etag = md5($filetime);
             $time = date('r', $filetime);
             $expires = date('r', $filetime + 3600);
-
-            $response = response(null, 304, $headers);
-
-            $file_content_changed = trim(\Request::header('If-None-Match'), '\'\"') != $etag;
-            $file_modified = new \DateTime(\Request::header('If-Modified-Since')) != new \DateTime($time);
-
-            if ($file_content_changed || $file_modified) {
-                $response = response($file, 200, $headers)->header('Content-Type', \Storage::mimeType($path));
+            if (trim(\Request::header('If-None-Match'), '\'\"') != $etag ||
+                new \DateTime(\Request::header('If-Modified-Since')) != new \DateTime($time)
+            ) {
+                return response($file, 200, $headers)->header('Content-Type', \Storage::mimeType($path))
+                    ->setEtag($etag)
+                    ->setLastModified(new \DateTime($time))
+                    ->setExpires(new \DateTime($expires))
+                    ->setPublic();
             }
 
-            return $response
+            return response(null, 304, $headers)
                 ->setEtag($etag)
                 ->setLastModified(new \DateTime($time))
                 ->setExpires(new \DateTime($expires))
@@ -135,6 +116,7 @@ class FileApi
             abort(404);
         }
     }
+
     public function drop($filename)
     {
         // Cut original file name
@@ -143,11 +125,12 @@ class FileApi
 
         // Find all images in basepath
         $allFiles = \Storage::files($this->basepath);
-        $files = array_filter($allFiles, function ($file) use ($origin_name) {
+        $files = array_filter($allFiles, function ($file) use ($origin_name)
+        {
             return preg_match('/^(.*)'.$origin_name.'(.*)$/', $file);
         });
 
-        // Delete original image and thumbnails
+        // Delete original image, compressed image and thumbnails
         foreach ($files as $file) {
             \Storage::delete($file);
         }
@@ -157,7 +140,7 @@ class FileApi
      ***********  Private Functions *************
      ********************************************/
 
-    private function moveFile($upload_file, $cus_name, $can_make_watermark = false)
+    private function moveFile($upload_file, $cus_name)
     {
         $suffix = $upload_file->getClientOriginalExtension();
 
@@ -179,10 +162,10 @@ class FileApi
 
         if (!is_null($img) && !empty($this->getThumbSizes())) {
             $this->saveThumb($img, $original_name, $suffix);
-            if ($can_make_watermark) {
-                $this->mergeWatermark($img, $original_name, $suffix);
-            }
+            $this->saveCompress($img, $original_name, $suffix);
         }
+
+
 
         return $filename;
     }
@@ -190,41 +173,36 @@ class FileApi
     private function setTmpImage($upload_file)
     {
         $image_types = array('image/png', 'image/gif', 'image/jpeg', 'image/jpg');
-        $image_path = $upload_file instanceof UploadedFile ? $upload_file->getRealPath() : $upload_file;
 
         if (in_array(\File::mimeType($upload_file), $image_types)) {
             switch (\File::mimeType($upload_file)) {
                 case 'image/png':
-                    $img = imagecreatefrompng($image_path);
+                    $img = imagecreatefrompng($upload_file->getRealPath());
                     break;
                 case 'image/gif':
-                    $img = imagecreatefromgif($image_path);
-                    imagegif($img, $image_path);
+                    $img = imagecreatefromgif($upload_file->getRealPath());
                     break;
                 case 'image/jpeg':
                 case 'image/jpg':
                 default:
-                    $img = imagecreatefromjpeg($image_path);
-                    try {
-                        $exif = exif_read_data($image_path);
-                        if (isset($exif['Orientation'])) {
-                            switch ($exif['Orientation']) {
-                                case 8:
-                                    $img = imagerotate($img, 90, 0);
-                                    break;
-                                case 3:
-                                    $img = imagerotate($img, 180, 0);
-                                    break;
-                                case 6:
-                                    $img = imagerotate($img, -90, 0);
-                                    break;
-                            }
+                    $img = imagecreatefromjpeg($upload_file->getRealPath());
+                    $exif = read_exif_data($upload_file->getRealPath());
+                    if (isset($exif['Orientation'])) {
+                        switch ($exif['Orientation']) {
+                            case 8:
+                                $img = imagerotate($img, 90, 0);
+                                break;
+                            case 3:
+                                $img = imagerotate($img, 180, 0);
+                                break;
+                            case 6:
+                                $img = imagerotate($img, -90, 0);
+                                break;
                         }
-                        imagejpeg($img, $image_path);
-                    } catch (\Exception $e) {
-                        //ignore cannot read exif
                     }
             }
+
+            imagepng($img, $upload_file->getRealPath());
 
             return $img;
         } else {
@@ -243,7 +221,7 @@ class FileApi
 
             $thumb_name   = $this->basepath . $original_name . '_' . $size_name . '.' . $suffix;
             $main_image   = $original_name . '.' . $suffix;
-            $tmp_filename = 'tmp' . DIRECTORY_SEPARATOR . $main_image;
+            $tmp_filename = 'tmp/' . $main_image;
 
             $tmp_thumb = $this->resizeOrCropThumb($img, $size);
 
@@ -259,42 +237,6 @@ class FileApi
             // remove tmp image
             \Storage::disk('local')->delete($tmp_filename);
         }
-    }
-
-    private function mergeWatermark($image, $original_name, $suffix)
-    {
-        $watermark = config('fileapi.watermark');
-        if (!File::exists(base_path($watermark))) {
-            return null;
-        }
-
-        $watermark_image = $this->setTmpImage(base_path($watermark));
-        imagesavealpha($watermark_image, true);
-        imagesetbrush($image, $watermark_image);
-        $watermark_pos_x = imagesx($image) - imagesy($watermark_image) - 100;
-        $watermark_pos_y = (imagesy($image) - (imagesy($image) * 1 / 1.91)) / 2;
-        imageline(
-            $image,
-            $watermark_pos_x,
-            $watermark_pos_y,
-            $watermark_pos_x,
-            $watermark_pos_y,
-            IMG_COLOR_BRUSHED
-        );
-        imagesavealpha($image, true);
-        $main_image   = $original_name . '.' . $suffix;
-        $tmp_filename = 'tmp' . DIRECTORY_SEPARATOR . $main_image;
-        $tmp_path = \Storage::disk('local')->getDriver()->getAdapter()->getPathPrefix();
-
-
-        $watermark_filename   = $this->basepath . $original_name . '_W' .  '.' . $suffix;
-        // save thumbnail image
-        imagepng($image, $tmp_path . $tmp_filename);
-        $tmp_file = \Storage::disk('local')->get($tmp_filename);
-        \Storage::put($watermark_filename, $tmp_file);
-
-        // remove tmp image
-        \Storage::disk('local')->delete($tmp_filename);
     }
 
     private function resizeOrCropThumb($img, $size)
@@ -313,11 +255,10 @@ class FileApi
 
         // create a new temporary thumbnail image
         $tmp_thumb = imagecreatetruecolor($thumb_width, $thumb_height);
-        $whitecolor = imagecolorallocatealpha($tmp_thumb, 255, 255, 255, 0);
-        imagefill($tmp_thumb, 0, 0, $whitecolor);
 
         // copy and resize original image into thumbnail image
-        imagecopyresampled($tmp_thumb, $img, 0, 0, 0, 0, $thumb_width, $thumb_height, $width, $height);
+        imagecopyresized($tmp_thumb, $img, 0, 0, 0, 0, $thumb_width, $thumb_height, $width, $height);
+
         return $tmp_thumb;
     }
 
@@ -328,27 +269,27 @@ class FileApi
 
     private function cropThumb($img, &$width, &$height, $thumb_width, $thumb_height)
     {
-        $image_ratio = $height / $width;
-        $thumb_ratio = $thumb_height / $thumb_width;
+        $image_ratio = $height/$width;
+        $thumb_ratio = $thumb_height/$thumb_width;
 
         if ($image_ratio !== $thumb_ratio) {
             if ($image_ratio < $thumb_ratio) {
-                $new_width = $thumb_width * $height / $thumb_height;
+                $new_width = $thumb_width*$height/$thumb_height;
 
                 $square = [
-                    'x' => ($width - $new_width) / 2,
+                    'x' => ($width - $new_width)/2,
                     'y' => 0,
                     'width' => $new_width,
                     'height' => $height
                 ];
 
                 $width = $new_width;
-            } elseif ($image_ratio > $thumb_ratio) {
-                $new_height = $thumb_height * $width / $thumb_width;
+            } else if ($image_ratio > $thumb_ratio) {
+                $new_height = $thumb_height*$width/$thumb_width;
 
                 $square = [
                     'x' => 0,
-                    'y' => ($height - $new_height) / 2,
+                    'y' => ($height - $new_height)/2,
                     'width' => $width,
                     'height' => $new_height
                 ];
@@ -364,14 +305,14 @@ class FileApi
 
     private function resizeThumb($width, $height, &$thumb_width, &$thumb_height)
     {
-        $image_ratio = $height / $width;
-        $thumb_ratio = $thumb_height / $thumb_width;
+        $image_ratio = $height/$width;
+        $thumb_ratio = $thumb_height/$thumb_width;
 
         if ($image_ratio !== $thumb_ratio) {
             if ($image_ratio < $thumb_ratio) {
-                $thumb_height = $thumb_width * $height / $width;
-            } elseif ($image_ratio > $thumb_ratio) {
-                $thumb_width = $thumb_height * $width / $height;
+                $thumb_height = $thumb_width*$height/$width;
+            } else if ($image_ratio > $thumb_ratio) {
+                $thumb_width = $thumb_height*$width/$height;
             }
         }
     }
@@ -382,10 +323,28 @@ class FileApi
 
         if (!is_null($this->thumb_sizes)) {
             return $this->thumb_sizes;
-        } elseif (!is_null($config)) {
+        } else if (!is_null($config)) {
             return $config;
         } else {
             return $this->default_sizes;
         }
+    }
+
+    private function saveCompress($img, $original_name, $suffix, $quality = 90)
+    {
+        $compress_name   = $this->basepath . $original_name . '_CP.' . $suffix;
+        $main_image   = $original_name . '.' . $suffix;
+        $tmp_filename = 'tmp/' . $main_image;
+
+        $tmp_path = \Storage::disk('local')->getDriver()->getAdapter()->getPathPrefix();
+
+        // save thumbnail image
+        imagejpeg($img, $tmp_path . $tmp_filename, config('fileapi.compress_quality', $quality));
+
+        $tmp_file = \Storage::disk('local')->get($tmp_filename);
+        \Storage::put($compress_name, $tmp_file);
+
+        // remove tmp image
+        \Storage::disk('local')->delete($tmp_filename);
     }
 }
