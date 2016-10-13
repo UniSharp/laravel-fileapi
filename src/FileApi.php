@@ -13,6 +13,7 @@ class FileApi
     protected $default_sizes = ['S' => '96x96', 'M' => '256x256', 'L' => '480x480'];
     protected $thumb_sizes = null;
     protected $shouldCropThumb = false;
+    protected $compress_quality = 90;
 
     public function __construct($basepath = DIRECTORY_SEPARATOR)
     {
@@ -387,5 +388,23 @@ class FileApi
         } else {
             return $this->default_sizes;
         }
+    }
+
+    private function saveCompress($img, $original_name, $suffix)
+    {
+        $compress_name   = $this->basepath . $original_name . '_CP.' . $suffix;
+        $main_image   = $original_name . '.' . $suffix;
+        $tmp_filename = 'tmp/' . $main_image;
+
+        $tmp_path = \Storage::disk('local')->getDriver()->getAdapter()->getPathPrefix();
+
+        // save thumbnail image
+        imagejpeg($img, $tmp_path . $tmp_filename, config('fileapi.compress_quality', $this->compress_quality));
+
+        $tmp_file = \Storage::disk('local')->get($tmp_filename);
+        \Storage::put($compress_name, $tmp_file);
+
+        // remove tmp image
+        \Storage::disk('local')->delete($tmp_filename);
     }
 }

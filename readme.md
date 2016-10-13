@@ -4,7 +4,7 @@
 
  * Handle files with Laravel Storage.
  * Load files through Laravel routing instead of public path.
- * Save images with thumbs, sizes are customisable.
+ * Save images with thumbs, compressed image, and sizes are customisable.
 
 ## Installation
 
@@ -54,6 +54,12 @@ in `config/fileapi.php`
 
     ```php
     'default_thumbs' => ['S' => '96x96', 'M' => '256x256', 'L' => '480x480'],
+    ```
+
+1. set default image compress quality
+
+    ```php
+    'compress_quality' => 90,
     ```
 
 1. choose whether you want to enable upload directly by url(api)
@@ -109,27 +115,28 @@ $fa_article = new FileApi('/images/article/'); # initiate another instance
     ```php
     $file = $fa
         ->thumbs([
-        	'S' => '150x100',
-        	'M' => '300x200',
-        	'L' => '450x300'
-        	])
+            'S' => '150x100',
+            'M' => '300x200',
+            'L' => '450x300'
+            ])
         ->save(\Input::file('main_image'));
     ```
 
 * make cropped thumbs
         
-	```php
-	$file = $fa->crop()->save(\Input::file('main_image'));
-	```
+    ```php
+    $file = $fa->crop()->save(\Input::file('main_image'));
+    ```
 
 ### Get image url
 
 ```php
 $fa->get('wfj412.jpg');        // => get image url of 'L' size
 $fa->get('wfj412.jpg', 'M');   // => get image url of 'M' size
-$fa->get('wfj412.jpg', 'full); // => get image url of full size
+$fa->get('wfj412.jpg', 'full'); // => get image url of full size
+$fa->get('wfj412.jpg', 'CP'); // => get image url of compressed one
 ```
-	
+    
 ### Delete image and thumbs
 
 ```php
