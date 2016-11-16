@@ -201,6 +201,7 @@ class FileApi
                     $img = imagecreatefrompng($image_path);
                     break;
                 case 'image/gif':
+                    break;
                 case 'image/jpeg':
                 case 'image/jpg':
                 default:
