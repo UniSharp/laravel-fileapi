@@ -193,6 +193,7 @@ class FileApi
     {
         $image_types = array('image/png', 'image/gif', 'image/jpeg', 'image/jpg');
         $image_path = $upload_file instanceof UploadedFile ? $upload_file->getRealPath() : $upload_file;
+        $img = null;
 
         if (in_array(\File::mimeType($upload_file), $image_types)) {
             switch (\File::mimeType($upload_file)) {
@@ -200,9 +201,6 @@ class FileApi
                     $img = imagecreatefrompng($image_path);
                     break;
                 case 'image/gif':
-                    $img = imagecreatefromgif($image_path);
-                    imagegif($img, $image_path);
-                    break;
                 case 'image/jpeg':
                 case 'image/jpg':
                 default:
