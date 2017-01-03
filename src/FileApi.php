@@ -164,7 +164,7 @@ class FileApi
         } else {
             $original_name = $cus_name;
         }
-        $filename = $original_name . '.' .$suffix;
+        $filename = $original_name . (!empty($suffix) ? '.' . $suffix : '');
 
         $img = $this->setTmpImage($upload_file);
 
@@ -232,8 +232,9 @@ class FileApi
                 $size_name = $size_code;
             }
 
-            $thumb_name   = $this->basepath . $original_name . '_' . $size_name . '.' . $suffix;
-            $main_image   = $original_name . '.' . $suffix;
+            $thumb_name   = $this->basepath . $original_name . '_' . $size_name
+                . (!empty($suffix) ? '.' . $suffix : '');
+            $main_image   = $original_name . (!empty($suffix) ? '.' . $suffix : '');
             $tmp_filename = 'tmp/' . $main_image;
 
             $tmp_thumb = $this->resizeOrCropThumb($img, $size);
