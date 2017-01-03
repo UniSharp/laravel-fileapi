@@ -27,7 +27,16 @@ class FileApi
         }
 
         $this->visibility = $visibility;
+    }
+
+    public function setBasePath($basepath)
+    {
+        if (mb_substr($basepath, -1, 1, 'utf8') != '/') {
+            $basepath .= '/';
+        }
+
         $this->basepath = $basepath;
+        return $this;
     }
 
     public function get($filename, $size = null)
