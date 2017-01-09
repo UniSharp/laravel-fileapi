@@ -207,7 +207,7 @@ class FileApi
                 default:
                     $img = imagecreatefromjpeg($image_path);
                     try {
-                        $exif = exif_read_data($image_path);
+                        $exif = @exif_read_data($image_path);
                         if (isset($exif['Orientation'])) {
                             switch ($exif['Orientation']) {
                                 case 8:
