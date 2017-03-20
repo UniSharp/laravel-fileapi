@@ -9,6 +9,11 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class FileApi
 {
+    const SIZE_ORIGINAL = null;
+    const SIZE_LARGE = 'L';
+    const SIZE_MEDIUM = 'M';
+    const SIZE_SMALL = 'S';
+
     protected $basepath;
     protected $default_sizes = ['S' => '96x96', 'M' => '256x256', 'L' => '480x480'];
     protected $thumb_sizes = null;
@@ -28,7 +33,7 @@ class FileApi
         $this->basepath = $basepath;
     }
 
-    public function get($filename, $size = null)
+    public function get($filename, $size = self::SIZE_LARGE)
     {
         if (empty($filename)) {
             return '';
@@ -40,13 +45,12 @@ class FileApi
         if (empty($filename)) {
             return '';
         }
-        
-        if (empty($size) && \Storage::exists($this->basepath . $file[0] . '_L.' . $file[1])) {
-            $file_path = $this->basepath . $file[0] . '_L.' . $file[1];
-        } elseif (\Storage::exists($this->basepath . $file[0] . '_' . $size . '.' . $file[1])) {
+
+        $file_path = $this->basepath . $filename;
+
+        if ($size != self::SIZE_ORIGINAL
+            && \Storage::exists($this->basepath . $file[0] . '_' . $size . '.' . $file[1])) {
             $file_path = $this->basepath . $file[0] . '_' . $size . '.' . $file[1];
-        } else {
-            $file_path = $this->basepath . $filename;
         }
 
         if (\Config::get('filesystems.default') == 's3') {
