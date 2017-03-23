@@ -131,9 +131,20 @@ $fa_article = new FileApi('/images/article/'); # initiate another instance
 ### Get image url
 
 ```php
-$fa->get('wfj412.jpg');        // => get image url of 'L' size
-$fa->get('wfj412.jpg', 'M');   // => get image url of 'M' size
-$fa->get('wfj412.jpg', 'full'); // => get image url of full size
+// large size
+$fa->get('wfj412.jpg');
+$fa->get('wfj412.jpg', 'L');
+$fa->get('wfj412.jpg', 'FileApi::SIZE_LARGE');
+
+// medium size
+$fa->get('wfj412.jpg', 'M');
+$fa->get('wfj412.jpg', FileApi::SIZE_MEDIUM);
+
+// full size
+$fa->get('wfj412.jpg', 'full');
+$fa->get('wfj412.jpg', FileApi::SIZE_ORIGINAL);
+
+// comporssed
 $fa->get('wfj412.jpg', 'CP'); // => get image url of compressed one
 ```
     
