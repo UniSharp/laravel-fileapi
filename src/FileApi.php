@@ -246,7 +246,7 @@ class FileApi
             // save thumbnail image
             imagepng($tmp_thumb, $tmp_path . $tmp_filename);
             $tmp_file = \Storage::disk('local')->get($tmp_filename);
-            Storage::put($thumb_name, $tmp_file);
+            Storage::put($thumb_name, $tmp_file, $this->visibility);
 
             // remove tmp image
             Storage::disk('local')->delete($tmp_filename);
