@@ -3,6 +3,7 @@
 namespace Unisharp\FileApi;
 
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Storage;
 use League\Flysystem\FileNotFoundException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -19,8 +20,9 @@ class FileApi
     protected $thumb_sizes = null;
     protected $shouldCropThumb = false;
     protected $compress_quality = 90;
+    protected $visibility;
 
-    public function __construct($basepath = DIRECTORY_SEPARATOR)
+    public function __construct($basepath = DIRECTORY_SEPARATOR, $visibility = 'public')
     {
         if (mb_substr($basepath, -1, 1, 'utf8') != DIRECTORY_SEPARATOR) {
             $basepath .= DIRECTORY_SEPARATOR;
@@ -30,7 +32,17 @@ class FileApi
             $basepath = mb_substr($basepath, 1, null, 'utf8');
         }
 
+        $this->visibility = $visibility;
+    }
+
+    public function setBasePath($basepath)
+    {
+        if (mb_substr($basepath, -1, 1, 'utf8') != '/') {
+            $basepath .= '/';
+        }
+
         $this->basepath = $basepath;
+        return $this;
     }
 
     public function get($filename, $size = self::SIZE_LARGE)
@@ -49,13 +61,13 @@ class FileApi
         $file_path = $this->basepath . $filename;
 
         if ($size != self::SIZE_ORIGINAL
-            && \Storage::exists($this->basepath . $file[0] . '_' . $size . '.' . $file[1])) {
+            && Storage::exists($this->basepath . $file[0] . '_' . $size . '.' . $file[1])) {
             $file_path = $this->basepath . $file[0] . '_' . $size . '.' . $file[1];
         }
 
         if (\Config::get('filesystems.default') == 's3') {
-            return \Storage::getDriver()->getAdapter()->getClient()->getObjectUrl(
-                \Storage::getDriver()->getAdapter()->getBucket(),
+            return Storage::getDriver()->getAdapter()->getClient()->getObjectUrl(
+                Storage::getDriver()->getAdapter()->getBucket(),
                 $this->basepath . $filename
             );
         } else {
@@ -100,11 +112,13 @@ class FileApi
 
     public function getUrl($filename)
     {
-        if (\Config::get('filesystems.default') == 's3') {
-            return \Storage::getDriver()->getAdapter()->getClient()->getObjectUrl(
-                \Storage::getDriver()->getAdapter()->getBucket(),
+        if (Storage::getDriver()->getAdapter() == 's3') {
+            return Storage::getDriver()->getAdapter()->getClient()->getObjectUrl(
+                Storage::getDriver()->getAdapter()->getBucket(),
                 $this->basepath . $filename
             );
+        } elseif (config('filesystems.default') == 'gcs') {
+            return Storage::getDriver()->getAdapter()->getUrl($this->basepath . $filename);
         } else {
             return $this->basepath . $filename;
         }
@@ -114,19 +128,19 @@ class FileApi
     {
         try {
             $path = $this->basepath . $filename;
-            $file = \Storage::get($path);
-            $filetime = \Storage::lastModified($path);
+            $file = Storage::get($path);
+            $filetime = Storage::lastModified($path);
             $etag = md5($filetime);
             $time = date('r', $filetime);
             $expires = date('r', $filetime + 3600);
 
             $response = response(null, 304, $headers);
 
-            $file_content_changed = trim(\Request::header('If-None-Match'), '\'\"') != $etag;
-            $file_modified = new \DateTime(\Request::header('If-Modified-Since')) != new \DateTime($time);
+            $file_content_changed = trim(Request::header('If-None-Match'), '\'\"') != $etag;
+            $file_modified = new \DateTime(Request::header('If-Modified-Since')) != new \DateTime($time);
 
             if ($file_content_changed || $file_modified) {
-                $response = response($file, 200, $headers)->header('Content-Type', \Storage::mimeType($path));
+                $response = response($file, 200, $headers)->header('Content-Type', Storage::mimeType($path));
             }
 
             return $response
@@ -140,6 +154,7 @@ class FileApi
             abort(404);
         }
     }
+
     public function drop($filename)
     {
         // Cut original file name
@@ -147,14 +162,14 @@ class FileApi
         $origin_name = substr($filename, 0, $dot);
 
         // Find all images in basepath
-        $allFiles = \Storage::files($this->basepath);
+        $allFiles = Storage::files($this->basepath);
         $files = array_filter($allFiles, function ($file) use ($origin_name) {
             return preg_match('/^(.*)'.$origin_name.'(.*)$/', $file);
         });
 
         // Delete original image and thumbnails
         foreach ($files as $file) {
-            \Storage::delete($file);
+            Storage::delete($file);
         }
     }
 
@@ -171,16 +186,17 @@ class FileApi
         } else {
             $original_name = $cus_name;
         }
-        $filename = $original_name . '.' .$suffix;
+        $filename = $original_name . (!empty($suffix) ? '.' . $suffix : '');
 
         $img = $this->setTmpImage($upload_file);
 
-        \Storage::put(
+        Storage::put(
             $this->basepath . $filename,
-            file_get_contents($upload_file->getRealPath())
+            file_get_contents($upload_file->getRealPath()),
+            $this->visibility
         );
 
-        \File::delete($upload_file->getRealPath());
+        File::delete($upload_file->getRealPath());
 
         if (!is_null($img) && !empty($this->getThumbSizes())) {
             $this->saveThumb($img, $original_name, $suffix);
@@ -199,8 +215,8 @@ class FileApi
         $image_path = $upload_file instanceof UploadedFile ? $upload_file->getRealPath() : $upload_file;
         $img = null;
 
-        if (in_array(\File::mimeType($upload_file), $image_types)) {
-            switch (\File::mimeType($upload_file)) {
+        if (in_array(File::mimeType($upload_file), $image_types)) {
+            switch (File::mimeType($upload_file)) {
                 case 'image/png':
                     $img = imagecreatefrompng($image_path);
                     break;
@@ -253,16 +269,16 @@ class FileApi
             $tmp_thumb = $this->resizeOrCropThumb($img, $size);
 
             // save tmp image
-            \Storage::disk('local')->put($tmp_filename, \Storage::get($this->basepath . $main_image));
-            $tmp_path = \Storage::disk('local')->getDriver()->getAdapter()->getPathPrefix();
+            Storage::disk('local')->put($tmp_filename, Storage::get($this->basepath . $main_image));
+            $tmp_path = Storage::disk('local')->getDriver()->getAdapter()->getPathPrefix();
 
             // save thumbnail image
             imagepng($tmp_thumb, $tmp_path . $tmp_filename);
-            $tmp_file = \Storage::disk('local')->get($tmp_filename);
-            \Storage::put($thumb_name, $tmp_file);
+            $tmp_file = Storage::disk('local')->get($tmp_filename);
+            Storage::put($thumb_name, $tmp_file, $this->visibility);
 
             // remove tmp image
-            \Storage::disk('local')->delete($tmp_filename);
+            Storage::disk('local')->delete($tmp_filename);
         }
     }
 
@@ -289,17 +305,17 @@ class FileApi
         imagesavealpha($image, true);
         $main_image   = $original_name . '.' . $suffix;
         $tmp_filename = 'tmp' . DIRECTORY_SEPARATOR . $main_image;
-        $tmp_path = \Storage::disk('local')->getDriver()->getAdapter()->getPathPrefix();
+        $tmp_path = Storage::disk('local')->getDriver()->getAdapter()->getPathPrefix();
 
 
         $watermark_filename   = $this->basepath . $original_name . '_W' .  '.' . $suffix;
         // save thumbnail image
         imagepng($image, $tmp_path . $tmp_filename);
-        $tmp_file = \Storage::disk('local')->get($tmp_filename);
-        \Storage::put($watermark_filename, $tmp_file);
+        $tmp_file = Storage::disk('local')->get($tmp_filename);
+        Storage::put($watermark_filename, $tmp_file);
 
         // remove tmp image
-        \Storage::disk('local')->delete($tmp_filename);
+        Storage::disk('local')->delete($tmp_filename);
     }
 
     private function resizeOrCropThumb($img, $size)
@@ -400,15 +416,15 @@ class FileApi
         $main_image   = $original_name . '.' . $suffix;
         $tmp_filename = 'tmp/' . $main_image;
 
-        $tmp_path = \Storage::disk('local')->getDriver()->getAdapter()->getPathPrefix();
+        $tmp_path = Storage::disk('local')->getDriver()->getAdapter()->getPathPrefix();
 
         // save thumbnail image
         imagejpeg($img, $tmp_path . $tmp_filename, config('fileapi.compress_quality', $this->compress_quality));
 
-        $tmp_file = \Storage::disk('local')->get($tmp_filename);
-        \Storage::put($compress_name, $tmp_file);
+        $tmp_file = Storage::disk('local')->get($tmp_filename);
+        Storage::put($compress_name, $tmp_file);
 
         // remove tmp image
-        \Storage::disk('local')->delete($tmp_filename);
+        Storage::disk('local')->delete($tmp_filename);
     }
 }
