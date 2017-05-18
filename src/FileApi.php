@@ -232,16 +232,18 @@ class FileApi
                             switch ($exif['Orientation']) {
                                 case 8:
                                     $img = imagerotate($img, 90, 0);
+                                    imagejpeg($img, $image_path);
                                     break;
                                 case 3:
                                     $img = imagerotate($img, 180, 0);
+                                    imagejpeg($img, $image_path);
                                     break;
                                 case 6:
                                     $img = imagerotate($img, -90, 0);
+                                    imagejpeg($img, $image_path);
                                     break;
                             }
                         }
-                        imagejpeg($img, $image_path);
                     } catch (\Exception $e) {
                         //ignore cannot read exif
                     }
