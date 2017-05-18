@@ -232,15 +232,15 @@ class FileApi
                             switch ($exif['Orientation']) {
                                 case 8:
                                     $img = imagerotate($img, 90, 0);
-                                    imagejpeg($img, $image_path);
+                                    imagejpeg($img, $image_path, 100);
                                     break;
                                 case 3:
                                     $img = imagerotate($img, 180, 0);
-                                    imagejpeg($img, $image_path);
+                                    imagejpeg($img, $image_path, 100);
                                     break;
                                 case 6:
                                     $img = imagerotate($img, -90, 0);
-                                    imagejpeg($img, $image_path);
+                                    imagejpeg($img, $image_path, 100);
                                     break;
                             }
                         }
