@@ -32,6 +32,8 @@ class FileApi
             $basepath = mb_substr($basepath, 1, null, 'utf8');
         }
 
+        $this->setBasePath($basepath);
+
         $this->visibility = $visibility;
     }
 
