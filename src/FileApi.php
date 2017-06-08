@@ -180,12 +180,37 @@ class FileApi
         return Storage::exists($this->basepath . $filename);
     }
 
-    public function isDirectory($name)
+    public function isDirectory($filename)
     {
-        return is_array(
-            $this->basepath . DIRECTORY_SEPARATOR . $name,
-            Storage::Directories($this->basepath)
+        return in_array(
+            $this->basepath . DIRECTORY_SEPARATOR . $filename,
+            Storage::directories($this->basepath)
         );
+    }
+
+    public function extension($filename)
+    {
+        if (!$this->exists($filename)) {
+            return null;
+        }
+
+        return pathinfo($filename)['extension'];
+    }
+
+    public function move($old_name, $new_name)
+    {
+        if ($this->isImage($old_name)) {
+            $old_thumb_name = $this->getPossibleThumbName($old_name);
+            $new_thumb_name = $this->getPossibleThumbName($new_name);
+
+            for ($i = 0; $i < count($old_thumb_name); $i++) {
+                if ($this->exists($old_thumb_name[$i])) {
+                    Storage::move($this->basepath . $old_thumb_name[$i], $this->basepath . $new_thumb_name[$i]);
+                }
+            }
+        }
+
+        Storage::move($this->basepath . $old_name, $this->basepath . $new_name);
     }
 
     /********************************************
@@ -443,5 +468,27 @@ class FileApi
 
         // remove tmp image
         Storage::disk('local')->delete($tmp_filename);
+    }
+
+    private function isImage($filename)
+    {
+        $image_types = array('image/png', 'image/gif', 'image/jpeg', 'image/jpg');
+        $file_type = Storage::mimeType($this->basepath . $filename);
+
+        return in_array($file_type, $image_types);
+    }
+
+    private function getPossibleThumbName($filename)
+    {
+        $file_filename = pathinfo($filename)['filename'];
+        $file_extension = pathinfo($filename)['extension'];
+        $default_thumbs = config('fileapi.default_thumbs');
+        $thumb_name = [];
+
+        foreach ($default_thumbs as $key => $value) {
+            $thumb_name[] = $file_filename . '_' . $key . '.' . $file_extension;
+        }
+
+        return $thumb_name;
     }
 }
