@@ -60,10 +60,6 @@ class FileApi
         $file = explode('.', $filename);
         $file_path = '';
 
-        if (empty($filename)) {
-            return '';
-        }
-
         $file_path = $this->basepath . $filename;
 
         if ($size != self::SIZE_ORIGINAL
@@ -265,6 +261,34 @@ class FileApi
     public function getFileType($filename)
     {
         return Storage::mimeType($this->basepath . $filename);
+    }
+
+    public function fileHasThumb($filename, $size = null)
+    {
+        if (is_null($size)) {
+            $thumb_names = $this->getPossibleThumbName($filename);
+            foreach ($thumb_names as $thumb_name) {
+                if (Storage::exists($this->basepath . $thumb_name)) {
+                    return true;
+                }
+            }
+        }
+
+        $file_filename = pathinfo($filename)['filename'];
+        $file_extension = pathinfo($filename)['extension'];
+        $thumb_name = $file_filename . '_' . $size . '.' . $file_extension;
+
+        return Storage::exists($thumb_name);
+    }
+
+    public function lastModified($filename)
+    {
+        return Storage::lastModified($this->basepath . $filename);
+    }
+
+    public function size($filename)
+    {
+        return Storage::size($this->basepath . $filename);
     }
 
     /********************************************
