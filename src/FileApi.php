@@ -183,7 +183,7 @@ class FileApi
     public function isDirectory($filename)
     {
         return in_array(
-            $this->basepath . DIRECTORY_SEPARATOR . $filename,
+            $this->basepath . $filename,
             Storage::directories($this->basepath)
         );
     }
@@ -211,6 +211,27 @@ class FileApi
         }
 
         Storage::move($this->basepath . $old_name, $this->basepath . $new_name);
+    }
+
+    public function makeDirectory($folder_name)
+    {
+        Storage::makeDirectory($this->basepath . $folder_name);
+    }
+
+    public function directoryIsEmpty($folder_name)
+    {
+        if (!$this->isDirectory($folder_name)) {
+            return 'This file is not a directory';
+        }
+
+        return count(Storage::files($folder_name)) == 0;
+    }
+
+    public function deleteDirectory($folder_name)
+    {
+        if ($this->isDirectory($folder_name)) {
+            Storage::deleteDirectory($this->basepath . $folder_name);
+        }
     }
 
     /********************************************
