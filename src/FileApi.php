@@ -39,8 +39,12 @@ class FileApi
 
     public function setBasePath($basepath)
     {
-        if (mb_substr($basepath, -1, 1, 'utf8') != '/') {
-            $basepath .= '/';
+        if (mb_substr($basepath, -1, 1, 'utf8') != DIRECTORY_SEPARATOR) {
+            $basepath .= DIRECTORY_SEPARATOR;
+        }
+
+        if (mb_substr($basepath, 0, 1, 'utf8') == DIRECTORY_SEPARATOR) {
+            $basepath = mb_substr($basepath, 1, null, 'utf8');
         }
 
         $this->basepath = $basepath;
@@ -188,6 +192,14 @@ class FileApi
         );
     }
 
+    public function isFile($filename)
+    {
+        return in_array(
+            $filename,
+            Storage::files($this->basepath)
+        );
+    }
+
     public function extension($filename)
     {
         if (!$this->exists($filename)) {
@@ -232,6 +244,27 @@ class FileApi
         if ($this->isDirectory($folder_name)) {
             Storage::deleteDirectory($this->basepath . $folder_name);
         }
+    }
+
+    public function files()
+    {
+        $basepath = $this->basepath;
+
+        return array_map(function ($file) use ($basepath) {
+            return str_replace($basepath, '', $file);
+        }, Storage::files($basepath));
+    }
+
+    public function fileIsImage($filename)
+    {
+        $mime_type = Storage::mimeType($this->basepath . $filename);
+
+        return starts_with($mime_type, 'image');
+    }
+
+    public function getFileType($filename)
+    {
+        return Storage::mimeType($this->basepath . $filename);
     }
 
     /********************************************
