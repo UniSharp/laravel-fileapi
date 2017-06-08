@@ -175,6 +175,19 @@ class FileApi
         }
     }
 
+    public function exists($filename)
+    {
+        return Storage::exists($this->basepath . $filename);
+    }
+
+    public function isDirectory($name)
+    {
+        return is_array(
+            $this->basepath . DIRECTORY_SEPARATOR . $name,
+            Storage::Directories($this->basepath)
+        );
+    }
+
     /********************************************
      ***********  Private Functions *************
      ********************************************/
