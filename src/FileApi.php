@@ -191,7 +191,7 @@ class FileApi
     public function isFile($filename)
     {
         return in_array(
-            $filename,
+            $this->basepath . $filename,
             Storage::files($this->basepath)
         );
     }
@@ -240,6 +240,15 @@ class FileApi
         if ($this->isDirectory($folder_name)) {
             Storage::deleteDirectory($this->basepath . $folder_name);
         }
+    }
+
+    public function directories()
+    {
+        $basepath = $this->basepath;
+
+        return array_map(function ($directory) use ($basepath) {
+            return str_replace($basepath, '', $directory);
+        }, Storage::directories($basepath));
     }
 
     public function files()
