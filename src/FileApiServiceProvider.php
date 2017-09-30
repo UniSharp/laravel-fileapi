@@ -21,7 +21,6 @@ class FileApiServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/config/fileapi.php' => config_path('fileapi.php', 'config'),
         ], 'fileapi_config');
-
     }
 
     /**
@@ -31,6 +30,5 @@ class FileApiServiceProvider extends ServiceProvider
      */
     public function register()
     {
-
     }
 }
