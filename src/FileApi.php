@@ -77,9 +77,9 @@ class FileApi
         }
     }
 
-    public function thumbs($thumb_sizes = array())
+    public function thumbs($thumb_sizes = null)
     {
-        if (!empty($thumb_sizes)) {
+        if (!is_null($thumb_sizes)) {
             $this->thumb_sizes = $thumb_sizes;
         }
 
