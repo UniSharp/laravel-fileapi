@@ -134,7 +134,7 @@ $fa_article = new FileApi('/images/article/'); # initiate another instance
 // large size
 $fa->get('wfj412.jpg');
 $fa->get('wfj412.jpg', 'L');
-$fa->get('wfj412.jpg', 'FileApi::SIZE_LARGE');
+$fa->get('wfj412.jpg', FileApi::SIZE_LARGE);
 
 // medium size
 $fa->get('wfj412.jpg', 'M');
