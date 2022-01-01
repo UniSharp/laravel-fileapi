@@ -23,12 +23,12 @@ $enable_api_upload = config('fileapi.enable_api_upload', true);
 if ($enable_api_upload) {
     Route::group(['middleware' => config('fileapi.middlewares', [])], function () {
         Route::post(
-            config('api_prifix', '/api/v1') . '/images/{target}/{param?}',
+            config('api_prefix', '/api/v1') . '/images/{target}/{param?}',
             'Unisharp\FileApi\Http\Controllers\Api\FileController@images'
         );
 
         Route::post(
-            config('api_prifix', '/api/v1') . '/videos/{target}/{param?}',
+            config('api_prefix', '/api/v1') . '/videos/{target}/{param?}',
             'Unisharp\FileApi\Http\Controllers\Api\FileController@videos'
         );
     });
