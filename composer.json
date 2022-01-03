@@ -1,5 +1,5 @@
 {
-  "name": "unisharp/laravel-fileapi",
+  "name": "syofyanzuhad/laravel-fileapi",
   "description": "Laravel File API - Handle Files with Laravel Storage",
   "type": "library",
   "keywords": [ "fileapi", "file", "api", "storage", "laravel"],
